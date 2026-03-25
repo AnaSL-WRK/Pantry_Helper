@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Dashboard</h1>
+
+    {% if membership %}
+        <p><strong>Household:</strong> {{ membership.household.name }}</p>
+    {% else %}
+        <p>Este utilizador ainda não pertence a nenhuma household.</p>
+    {% endif %}
+
+    {% if role %}
+        <p><strong>Role:</strong> {{ role }}</p>
+    {% else %}
+        <p>Este utilizador ainda não tem role atribuída.</p>
+    {% endif %}
+{% endblock %}
