@@ -14,4 +14,25 @@
     {% else %}
         <p>Este utilizador ainda não tem role atribuída.</p>
     {% endif %}
+
+    <p><a href="{% url 'app:item_list' %}">Ver inventário</a></p>
+
+    {% if role == 'HouseholdAdmin' or role == 'InventoryManager' %}
+        <p><a href="{% url 'app:category_new' %}">Criar categoria</a></p>
+        <p><a href="{% url 'app:item_new' %}">Adicionar item</a></p>
+    {% endif %}
+
+    <h2>Itens mais próximos da validade</h2>
+
+    <ul>
+        {% for item in items %}
+            <li>
+                {{ item.name }} -
+                {{ item.quantity }} {{ item.unit }} -
+                validade: {{ item.expiry_date|default:"sem data" }}
+            </li>
+        {% empty %}
+            <li>Ainda não existem itens.</li>
+        {% endfor %}
+    </ul>
 {% endblock %}

@@ -21,9 +21,7 @@ from app import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('dashboard/', views.dashboard, name='dashboard'),
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
-    path('', include('tracker.urls')),
-
+    path('', include('app.urls')),
 ]

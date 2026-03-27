@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Inventário</h1>
+
+    <ul>
+        {% for item in items %}
+            <li>
+                <strong>{{ item.name }}</strong>
+                - {{ item.quantity }} {{ item.unit }}
+                - {{ item.get_location_display }}
+                - validade: {{ item.expiry_date|default:"sem data" }}
+            </li>
+        {% empty %}
+            <li>Não existem itens no inventário.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
