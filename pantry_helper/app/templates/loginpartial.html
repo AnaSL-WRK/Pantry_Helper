@@ -1,5 +1,5 @@
 {% if user.is_authenticated %}
-    <span>Olá, {{ user.username }}</span>
+    <span>Hello, {{ user.username }}</span>
 
     <form action="{% url 'logout' %}" method="post" style="display:inline;">
         {% csrf_token %}

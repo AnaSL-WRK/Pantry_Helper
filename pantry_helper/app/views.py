@@ -1,9 +1,8 @@
 from django.shortcuts import redirect, render
 from .utils import user_has_role, get_user_role
-from .forms import CategoryForm, ItemForm
-from .models import Item, Category
+from .forms import FoodForm
+from .models import Food
 
-# Create your views here.
 
 def home(request):
     return render(request, 'app/home.html')
@@ -15,55 +14,25 @@ def dashboard(request):
 
     membership = None
     role = get_user_role(request.user)
-    items = []
+    foods = []
 
     if hasattr(request.user, 'household_member'):
         membership = request.user.household_member
-        items = Item.objects.filter(
-            household=membership.household
-        ).order_by('expiry_date', 'name')[:5]
+        foods = Food.objects.filter(
+            household=membership.household,
+            quantity__gte=1
+        ).order_by('expiry_date', 'ingredient__name')[:5]
 
     tparams = {
         'membership': membership,
         'role': role,
-        'items': items,
+        'foods': foods,
     }
 
     return render(request, 'app/dashboard.html', tparams)
 
 
-def category_new(request):
-    if not request.user.is_authenticated:
-        return redirect('/login/')
-
-    if not (user_has_role(request.user, 'HouseholdAdmin') or user_has_role(request.user, 'InventoryManager')):
-        return redirect('/dashboard/')
-
-    if not hasattr(request.user, 'household_member'):
-        return redirect('/dashboard/')
-
-    membership = request.user.household_member
-    role = get_user_role(request.user)
-
-    if request.method == 'POST':
-        form = CategoryForm(request.POST)
-        if form.is_valid():
-            category = form.save(commit=False)
-            category.household = membership.household
-            category.save()
-            return redirect('app:item_list')
-    else:
-        form = CategoryForm()
-
-    tparams = {
-        'form': form,
-        'role': role,
-    }
-
-    return render(request, 'app/categoryform.html', tparams)
-
-
-def item_list(request):
+def food_list(request):
     if not request.user.is_authenticated:
         return redirect('/login/')
 
@@ -73,20 +42,21 @@ def item_list(request):
     membership = request.user.household_member
     role = get_user_role(request.user)
 
-    items = Item.objects.filter(
-        household=membership.household
-    ).order_by('expiry_date', 'name')
+    foods = Food.objects.filter(
+        household=membership.household,
+        quantity__gte=1
+    ).order_by('expiry_date', 'ingredient__name')
 
     tparams = {
-        'items': items,
+        'foods': foods,
         'membership': membership,
         'role': role,
     }
 
-    return render(request, 'app/itemlist.html', tparams)
+    return render(request, 'app/foodlist.html', tparams)
 
 
-def item_new(request):
+def food_new(request):
     if not request.user.is_authenticated:
         return redirect('/login/')
 
@@ -100,22 +70,20 @@ def item_new(request):
     role = get_user_role(request.user)
 
     if request.method == 'POST':
-        form = ItemForm(request.POST)
-        form.fields['category'].queryset = Category.objects.filter(household=membership.household)
+        form = FoodForm(request.POST)
 
         if form.is_valid():
-            item = form.save(commit=False)
-            item.household = membership.household
-            item.added_by = request.user
-            item.save()
-            return redirect('app:item_list')
+            food = form.save(commit=False)
+            food.household = membership.household
+            food.added_by = request.user
+            food.save()
+            return redirect('app:food_list')
     else:
-        form = ItemForm()
-        form.fields['category'].queryset = Category.objects.filter(household=membership.household)
+        form = FoodForm()
 
     tparams = {
         'form': form,
         'role': role,
     }
 
-    return render(request, 'app/itemform.html', tparams)
+    return render(request, 'app/foodform.html', tparams)

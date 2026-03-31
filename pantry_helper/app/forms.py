@@ -1,17 +1,12 @@
 from django import forms
-from .models import Category, Item
+from .models import Food
 
+#forms
 
-class CategoryForm(forms.ModelForm):
+class FoodForm(forms.ModelForm):
     class Meta:
-        model = Category
-        fields = ['name']
-
-
-class ItemForm(forms.ModelForm):
-    class Meta:
-        model = Item
-        fields = ['category', 'name', 'quantity', 'unit', 'location', 'expiry_date', 'notes']
+        model = Food
+        fields = ['ingredient', 'quantity', 'unit', 'location', 'expiry_date', 'notes']
         widgets = {
             'expiry_date': forms.DateInput(attrs={'type': 'date'}),
             'notes': forms.Textarea(attrs={'rows': 3}),

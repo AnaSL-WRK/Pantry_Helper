@@ -6,33 +6,30 @@
     {% if membership %}
         <p><strong>Household:</strong> {{ membership.household.name }}</p>
     {% else %}
-        <p>Este utilizador ainda não pertence a nenhuma household.</p>
+        <p>This user does not belong to a household yet.</p>
     {% endif %}
 
     {% if role %}
         <p><strong>Role:</strong> {{ role }}</p>
-    {% else %}
-        <p>Este utilizador ainda não tem role atribuída.</p>
     {% endif %}
 
-    <p><a href="{% url 'app:item_list' %}">Ver inventário</a></p>
+    <p><a href="{% url 'app:food_list' %}">View pantry</a></p>
 
     {% if role == 'HouseholdAdmin' or role == 'InventoryManager' %}
-        <p><a href="{% url 'app:category_new' %}">Criar categoria</a></p>
-        <p><a href="{% url 'app:item_new' %}">Adicionar item</a></p>
+        <p><a href="{% url 'app:food_new' %}">Add food</a></p>
     {% endif %}
 
-    <h2>Itens mais próximos da validade</h2>
+    <h2>Expiring soon</h2>
 
     <ul>
-        {% for item in items %}
+        {% for food in foods %}
             <li>
-                {{ item.name }} -
-                {{ item.quantity }} {{ item.unit }} -
-                validade: {{ item.expiry_date|default:"sem data" }}
+                {{ food.ingredient.name }} -
+                {{ food.quantity }} {{ food.unit }} -
+                expiry date: {{ food.expiry_date|default:"no date" }}
             </li>
         {% empty %}
-            <li>Ainda não existem itens.</li>
+            <li>No foods yet.</li>
         {% endfor %}
     </ul>
 {% endblock %}
