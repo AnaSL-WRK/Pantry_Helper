@@ -1,7 +1,9 @@
 from django.shortcuts import redirect, render
+from django.urls import reverse
+
 from .utils import user_has_role, get_user_role
-from .forms import FoodForm
-from .models import Food
+from .forms import FoodForm, IngredientForm
+from .models import Food, Ingredient
 
 
 def home(request):
@@ -69,9 +71,14 @@ def food_new(request):
     membership = request.user.household_member
     role = get_user_role(request.user)
 
+    initial_data = {}
+    ingredient_id = request.GET.get('ingredient')
+
+    if ingredient_id and Ingredient.objects.filter(pk=ingredient_id).exists():
+        initial_data['ingredient'] = ingredient_id
+
     if request.method == 'POST':
         form = FoodForm(request.POST)
-
         if form.is_valid():
             food = form.save(commit=False)
             food.household = membership.household
@@ -79,11 +86,40 @@ def food_new(request):
             food.save()
             return redirect('app:food_list')
     else:
-        form = FoodForm()
+        form = FoodForm(initial=initial_data)
+
+    add_ingredient_url = f"{reverse('app:ingredient_new')}?next={reverse('app:food_new')}"
 
     tparams = {
         'form': form,
         'role': role,
+        'add_ingredient_url': add_ingredient_url,
     }
 
     return render(request, 'app/foodform.html', tparams)
+
+
+def ingredient_new(request):
+    if not request.user.is_authenticated:
+        return redirect('/login/')
+
+    if not (user_has_role(request.user, 'HouseholdAdmin') or user_has_role(request.user, 'InventoryManager')):
+        return redirect('/dashboard/')
+
+    next_url = request.GET.get('next') or request.POST.get('next') or reverse('app:food_new')
+
+    if request.method == 'POST':
+        form = IngredientForm(request.POST)
+
+        if form.is_valid():
+            ingredient = form.save()
+            return redirect(f'{next_url}?ingredient={ingredient.pk}')
+    else:
+        form = IngredientForm()
+
+    tparams = {
+        'form': form,
+        'next_url': next_url,
+    }
+
+    return render(request, 'app/ingredientform.html', tparams)

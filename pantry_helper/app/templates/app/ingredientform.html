@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ page_title }}</h1>
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next_url }}">
+    {{ form.as_p }}
+    <button type="submit">Save food</button>
+  </form>
+
+  <p>
+    <a href="{{ next_url }}">Back</a>
+  </p>
+{% endblock %}
