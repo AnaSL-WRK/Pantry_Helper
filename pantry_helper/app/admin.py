@@ -1,9 +1,13 @@
 from django.contrib import admin
-from .models import Category, Household, HouseholdMember, Item
+from .models import Household, HouseholdMember, Category, Ingredient, Food, Recipe, RecipeIngredient, RecipeStep
 
 # Register your models here.
 
 admin.site.register(Household)
 admin.site.register(HouseholdMember)
 admin.site.register(Category)
-admin.site.register(Item)
+admin.site.register(Ingredient)
+admin.site.register(Food)
+admin.site.register(Recipe)
+admin.site.register(RecipeIngredient)
+admin.site.register(RecipeStep)

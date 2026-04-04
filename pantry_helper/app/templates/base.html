@@ -2,24 +2,19 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>WasteLess Home</title>
+    <title>Pantry Helper</title>
 </head>
 <body>
     <nav>
-        <a href="{% url 'app:home' %}">Home</a>
-
         {% if user.is_authenticated %}
             <a href="{% url 'app:dashboard' %}">Dashboard</a>
-
-            {% if role == 'HouseholdAdmin' %}
-                <a href="/members/">Gerir membros</a>
-            {% endif %}
+            <a href="{% url 'app:food_list' %}">Pantry</a>
 
             {% if role == 'InventoryManager' or role == 'HouseholdAdmin' %}
-                <a href="/items/new/">Adicionar item</a>
+                <a href="{% url 'app:food_new' %}">Add food</a>
             {% endif %}
         {% endif %}
-
+        <a href="{% url 'app:recipe_list' %}">Recipes</a>
         {% include "loginpartial.html" %}
     </nav>
 
