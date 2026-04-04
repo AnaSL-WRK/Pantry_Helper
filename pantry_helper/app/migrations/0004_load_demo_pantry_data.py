@@ -92,7 +92,7 @@ def unload_demo_pantry_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0003_load_recipe_ingredients'),
+        ('app', '0003_load_ingredients'),
         ('auth', '0012_alter_user_first_name_max_length'),
     ]
 

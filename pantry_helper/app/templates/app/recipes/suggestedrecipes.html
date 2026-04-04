@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Suggested recipes</h1>
+
+  <p>Recipes are sorted to prioritize ingredients that are expiring soon.</p>
+
+  {% if suggestions %}
+    <ul>
+      {% for item in suggestions %}
+        <li>
+          <a href="{% url 'app:recipe_detail' item.recipe.id %}">{{ item.recipe.name }}</a>
+          — {{ item.matched_count }}/{{ item.total_count }} ingredients available
+          — missing {{ item.missing_count }}
+          — uses expiring soon {{ item.expiring_match_count }}
+
+          {% if item.can_make_now %}
+            <br><strong>You can make this now.</strong>
+          {% elif item.almost_make_now %}
+            <br><strong>Only 1–2 ingredients missing.</strong>
+          {% endif %}
+
+          {% if item.expiring_ingredients %}
+            <br>
+            <small>Expiring soon: {{ item.expiring_ingredients|join:", " }}</small>
+          {% endif %}
+
+          {% if item.missing_ingredients %}
+            <br>
+            <small>Missing: {{ item.missing_ingredients|join:", " }}</small>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No suggested recipes found yet.</p>
+    <p>Add more foods to the pantry first.</p>
+  {% endif %}
+{% endblock %}

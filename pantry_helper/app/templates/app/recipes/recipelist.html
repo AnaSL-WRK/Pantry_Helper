@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Recipes</h1>
+
+  <p>
+    <a href="{% url 'app:suggested_recipes' %}">View suggested recipes</a>
+  </p>
+
+  {% if recipes %}
+    <ul>
+      {% for recipe in recipes %}
+        <li>
+          <a href="{% url 'app:recipe_detail' recipe.id %}">{{ recipe.name }}</a>
+          {% if recipe.author %} — {{ recipe.author }}{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No recipes available.</p>
+  {% endif %}
+{% endblock %}

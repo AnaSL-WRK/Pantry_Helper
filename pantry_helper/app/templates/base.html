@@ -6,8 +6,6 @@
 </head>
 <body>
     <nav>
-        <a href="{% url 'app:home' %}">Home</a>
-
         {% if user.is_authenticated %}
             <a href="{% url 'app:dashboard' %}">Dashboard</a>
             <a href="{% url 'app:food_list' %}">Pantry</a>
@@ -16,7 +14,7 @@
                 <a href="{% url 'app:food_new' %}">Add food</a>
             {% endif %}
         {% endif %}
-
+        <a href="{% url 'app:recipe_list' %}">Recipes</a>
         {% include "loginpartial.html" %}
     </nav>
 

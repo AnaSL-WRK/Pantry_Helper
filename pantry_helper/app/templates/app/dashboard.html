@@ -19,8 +19,10 @@
         <p><a href="{% url 'app:food_new' %}">Add food</a></p>
     {% endif %}
 
-    <h2>Expiring soon</h2>
+    <p><a href="{% url 'app:recipe_list' %}">Browse recipes</a></p>
+    <p><a href="{% url 'app:suggested_recipes' %}">Suggested recipes</a></p>
 
+    <h2>Pantry overview</h2>
     <ul>
         {% for food in foods %}
             <li>
@@ -30,6 +32,59 @@
             </li>
         {% empty %}
             <li>No foods yet.</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Expiring soon</h2>
+    <ul>
+        {% for food in expiring_foods %}
+            <li>
+                {{ food.ingredient.name }} -
+                {{ food.quantity }} {{ food.unit }} -
+                expires on {{ food.expiry_date }}
+            </li>
+        {% empty %}
+            <li>No foods are expiring in the next 7 days.</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Expired foods</h2>
+    <ul>
+        {% for food in expired_foods %}
+            <li>
+                {{ food.ingredient.name }} -
+                {{ food.quantity }} {{ food.unit }} -
+                expired on {{ food.expiry_date }}
+            </li>
+        {% empty %}
+            <li>No expired foods.</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Suggested recipes</h2>
+    <p>Recipes that use ingredients you already have, especially ones expiring soon.</p>
+
+    <ul>
+        {% for item in recipe_suggestions %}
+            <li>
+                <a href="{% url 'app:recipe_detail' item.recipe.id %}">{{ item.recipe.name }}</a>
+                - {{ item.matched_count }}/{{ item.total_count }} ingredients available
+                - missing {{ item.missing_count }}
+                - uses expiring soon {{ item.expiring_match_count }}
+
+                {% if item.can_make_now %}
+                    <br><strong>You can make this now.</strong>
+                {% elif item.almost_make_now %}
+                    <br><strong>Only 1–2 ingredients missing.</strong>
+                {% endif %}
+
+                {% if item.expiring_ingredients %}
+                    <br>
+                    <small>Expiring soon: {{ item.expiring_ingredients|join:", " }}</small>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li>No recipe suggestions yet.</li>
         {% endfor %}
     </ul>
 {% endblock %}
