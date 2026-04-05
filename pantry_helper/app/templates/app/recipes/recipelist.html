@@ -3,9 +3,11 @@
 {% block content %}
   <h1>Recipes</h1>
 
-  <p>
-    <a href="{% url 'app:suggested_recipes' %}">View suggested recipes</a>
-  </p>
+  {% if perms.app.view_suggested_recipes %}
+    <p>
+      <a href="{% url 'app:suggested_recipes' %}">View suggested recipes</a>
+    </p>
+  {% endif %}
 
   {% if recipes %}
     <ul>

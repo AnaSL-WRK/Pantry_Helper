@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Delete food</h1>
+
+  <p>
+    Are you sure you want to delete
+    <strong>{{ food.ingredient.name }}</strong>?
+  </p>
+
+  <p>Current quantity: {{ food.quantity }} {{ food.unit }}</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Yes, delete</button>
+  </form>
+
+  <p><a href="{% url 'app:food_list' %}">Cancel</a></p>
+{% endblock %}
