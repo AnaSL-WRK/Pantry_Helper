@@ -13,14 +13,21 @@
         <p><strong>Role:</strong> {{ role }}</p>
     {% endif %}
 
-    <p><a href="{% url 'app:food_list' %}">View pantry</a></p>
+    {% if perms.app.view_food %}
+        <p><a href="{% url 'app:food_list' %}">View pantry</a></p>
+    {% endif %}
 
-    {% if role == 'HouseholdAdmin' or role == 'InventoryManager' %}
+    {% if perms.app.add_food %}
         <p><a href="{% url 'app:food_new' %}">Add food</a></p>
     {% endif %}
 
-    <p><a href="{% url 'app:recipe_list' %}">Browse recipes</a></p>
-    <p><a href="{% url 'app:suggested_recipes' %}">Suggested recipes</a></p>
+    {% if perms.app.view_recipe %}
+        <p><a href="{% url 'app:recipe_list' %}">Browse recipes</a></p>
+    {% endif %}
+
+    {% if perms.app.view_suggested_recipes %}
+        <p><a href="{% url 'app:suggested_recipes' %}">Suggested recipes</a></p>
+    {% endif %}
 
     <h2>Pantry overview</h2>
     <ul>
@@ -61,30 +68,46 @@
         {% endfor %}
     </ul>
 
-    <h2>Suggested recipes</h2>
-    <p>Recipes that use ingredients you already have, especially ones expiring soon.</p>
+    {% if perms.app.view_suggested_recipes %}
+        <h2>Suggested recipes</h2>
+        <p>Recipes that use ingredients you already have, especially ones expiring soon.</p>
 
-    <ul>
-        {% for item in recipe_suggestions %}
-            <li>
-                <a href="{% url 'app:recipe_detail' item.recipe.id %}">{{ item.recipe.name }}</a>
-                - {{ item.matched_count }}/{{ item.total_count }} ingredients available
-                - missing {{ item.missing_count }}
-                - uses expiring soon {{ item.expiring_match_count }}
+        <ul>
+            {% for item in recipe_suggestions %}
+                <li>
+                    <a href="{% url 'app:recipe_detail' item.recipe.id %}">{{ item.recipe.name }}</a>
+                    - {{ item.matched_count }}/{{ item.total_count }} ingredients available
+                    - missing {{ item.missing_count }}
+                    - uses expiring soon {{ item.expiring_match_count }}
 
-                {% if item.can_make_now %}
-                    <br><strong>You can make this now.</strong>
-                {% elif item.almost_make_now %}
-                    <br><strong>Only 1–2 ingredients missing.</strong>
-                {% endif %}
+                    {% if item.can_make_now %}
+                        <br><strong>You can make this now.</strong>
+                    {% elif item.almost_make_now %}
+                        <br><strong>Only 1–2 ingredients missing.</strong>
+                    {% endif %}
 
-                {% if item.expiring_ingredients %}
-                    <br>
-                    <small>Expiring soon: {{ item.expiring_ingredients|join:", " }}</small>
-                {% endif %}
-            </li>
-        {% empty %}
-            <li>No recipe suggestions yet.</li>
-        {% endfor %}
-    </ul>
+                    {% if item.expiring_ingredients %}
+                        <br>
+                        <small>Expiring soon: {{ item.expiring_ingredients|join:", " }}</small>
+                    {% endif %}
+                </li>
+            {% empty %}
+                <li>No recipe suggestions yet.</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if perms.app.view_wastelog %}
+        <h3>Waste summary</h3>
+
+        <p>Total wasted units: {{ waste_total }}</p>
+
+        <ul>
+            {% for item in top_wasted_ingredients %}
+                <li>{{ item.ingredient__name }} — {{ item.total_wasted }}</li>
+            {% empty %}
+                <li>No waste registered yet.</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 {% endblock %}

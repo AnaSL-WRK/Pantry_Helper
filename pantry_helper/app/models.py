@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 
 # Create your models here.
 
@@ -96,7 +97,7 @@ class Food(models.Model):
         related_name='foods'
     )
 
-    quantity = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    quantity = models.IntegerField(default=0)
     unit = models.CharField(max_length=20, default='units')
     location = models.CharField(max_length=20, choices=LOCATION_CHOICES, default='PANTRY')
     expiry_date = models.DateField(null=True, blank=True)
@@ -213,3 +214,54 @@ class RecipeStep(models.Model):
 
     def __str__(self):
         return f'{self.recipe.name} - step {self.position}'
+    
+#to log wasted food and reasons for waste 
+class WasteLog(models.Model):
+    class WasteReason(models.TextChoices):
+        EXPIRED = 'expired', 'Expired'
+        SPOILED = 'spoiled', 'Spoiled'
+        FORGOTTEN = 'forgotten', 'Forgotten'
+        OTHER = 'other', 'Other'
+
+    household = models.ForeignKey(
+        'Household',
+        on_delete=models.CASCADE,
+        related_name='waste_logs'
+    )
+
+    food = models.ForeignKey(
+        'Food',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='waste_logs'
+    )
+
+    ingredient = models.ForeignKey(
+        'Ingredient',
+        on_delete=models.CASCADE,
+        related_name='waste_logs'
+    )
+
+    quantity = models.PositiveIntegerField(default=1)
+    reason = models.CharField(
+        max_length=20,
+        choices=WasteReason.choices,
+        default=WasteReason.EXPIRED
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='waste_logs'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.ingredient.name} - {self.quantity} ({self.reason})'

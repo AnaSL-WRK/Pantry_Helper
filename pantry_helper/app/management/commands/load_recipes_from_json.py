@@ -119,7 +119,7 @@ class Command(BaseCommand):
                 quantity = None
                 if quantity_value is not None:
                     try:
-                        quantity = Decimal(str(quantity_value))
+                        quantity = (int(quantity_value))
                     except (InvalidOperation, TypeError, ValueError):
                         quantity = None
 

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Pantry</h1>
+
+  {% if perms.app.add_food %}
+    <p><a href="{% url 'app:food_new' %}">Add food</a></p>
+  {% endif %}
+
+  {% if foods %}
+    <ul>
+      {% for food in foods %}
+        <li>
+          <strong>{{ food.ingredient.name }}</strong>
+          — {{ food.quantity }} {{ food.unit }}
+          ({{ food.get_location_display }})
+          {% if food.expiry_date %} - expires {{ food.expiry_date }}{% endif %}
+          {% if food.notes %}<br>Notes: {{ food.notes }}{% endif %}
+
+          <ul>
+            {% if perms.app.change_food %}
+              <li><a href="{% url 'app:food_edit' food.pk %}">Edit</a></li>
+            {% endif %}
+
+            {% if perms.app.delete_food %}
+              <li><a href="{% url 'app:food_delete' food.pk %}">Delete</a></li>
+            {% endif %}
+
+            {% if perms.app.mark_food_consumed %}
+              <li><a href="{% url 'app:food_consume' food.pk %}">Consume</a></li>
+            {% endif %}
+
+            {% if perms.app.mark_food_wasted %}
+              <li><a href="{% url 'app:food_waste' food.pk %}">Waste</a></li>
+            {% endif %}
+          </ul>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No foods in pantry yet.</p>
+  {% endif %}
+{% endblock %}
