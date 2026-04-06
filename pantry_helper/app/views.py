@@ -3,21 +3,30 @@ from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Sum
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.auth.models import User
+
+from .forms import (
+    FoodForm,
+    FoodQuantityForm,
+    HouseholdForm,
+    HouseholdMemberCreateForm,
+    IngredientForm,
+    MemberRoleForm,
+    WasteForm,
+)
+from .models import Food, Household, HouseholdMember, Ingredient, Recipe, WasteLog
+from .utils import assign_user_role, get_membership, get_user_role
 
 
-from .forms import FoodForm, IngredientForm, WasteForm, FoodQuantityForm, MemberRoleForm, HouseholdMemberCreateForm
-from .models import Food, Ingredient, Recipe, WasteLog, HouseholdMember
-from .utils import get_user_role, get_membership, assign_user_role
+AVAILABLE_ROLES = ['HouseholdAdmin', 'InventoryManager', 'Member', 'Viewer']
 
 
 def _get_available_foods_for_household(household):
     return Food.objects.select_related('ingredient').filter(
         household=household,
-        quantity__gte=1
+        quantity__gte=1,
     )
 
 
@@ -36,12 +45,14 @@ def _build_recipe_suggestions(household, limit=None):
         if food.expiry_date and today <= food.expiry_date <= expiring_limit:
             expiring_ingredient_ids.add(food.ingredient_id)
 
-    recipes = Recipe.objects.filter(
-        is_preloaded=True,
-        household__isnull=True
-    ).prefetch_related(
-        'recipe_ingredients__ingredient'
-    ).order_by('name')
+    recipes = (
+        Recipe.objects.filter(
+            is_preloaded=True,
+            household__isnull=True,
+        )
+        .prefetch_related('recipe_ingredients__ingredient')
+        .order_by('name')
+    )
 
     suggestions = []
 
@@ -102,6 +113,45 @@ def _build_recipe_suggestions(household, limit=None):
     return suggestions
 
 
+def _get_household_admin_count(household):
+    return (
+        HouseholdMember.objects.filter(
+            household=household,
+            user__groups__name='HouseholdAdmin',
+        )
+        .distinct()
+        .count()
+    )
+
+
+def _build_household_manage_context(request, membership, household_form=None, member_form=None):
+    members = (
+        HouseholdMember.objects.select_related('user', 'household')
+        .filter(household=membership.household)
+        .order_by('user__username')
+    )
+
+    members_with_roles = []
+    for member in members:
+        members_with_roles.append({
+            'membership': member,
+            'current_role': get_user_role(member.user),
+        })
+
+    return {
+        'membership': membership,
+        'role': get_user_role(request.user),
+        'household_form': household_form or HouseholdForm(instance=membership.household),
+        'member_form': member_form or HouseholdMemberCreateForm(),
+        'members_with_roles': members_with_roles,
+        'available_roles': AVAILABLE_ROLES,
+        'can_edit_household': request.user.has_perm('app.change_household'),
+        'can_manage_members': request.user.has_perm('app.manage_household_members'),
+        'can_change_member_role': request.user.has_perm('app.change_member_role'),
+        'is_creating_household': False,
+    }
+
+
 def home(request):
     return render(request, 'app/home.html')
 
@@ -121,29 +171,41 @@ def dashboard(request):
         today = timezone.localdate()
         expiring_limit = today + timedelta(days=7)
 
-        foods = Food.objects.filter(
-            household=membership.household,
-            quantity__gte=1
-        ).select_related('ingredient').order_by('expiry_date', 'ingredient__name')[:5]
+        foods = (
+            Food.objects.filter(
+                household=membership.household,
+                quantity__gte=1,
+            )
+            .select_related('ingredient')
+            .order_by('expiry_date', 'ingredient__name')[:5]
+        )
 
-        expiring_foods = Food.objects.filter(
-            household=membership.household,
-            quantity__gte=1,
-            expiry_date__isnull=False,
-            expiry_date__gte=today,
-            expiry_date__lte=expiring_limit
-        ).select_related('ingredient').order_by('expiry_date', 'ingredient__name')[:5]
+        expiring_foods = (
+            Food.objects.filter(
+                household=membership.household,
+                quantity__gte=1,
+                expiry_date__isnull=False,
+                expiry_date__gte=today,
+                expiry_date__lte=expiring_limit,
+            )
+            .select_related('ingredient')
+            .order_by('expiry_date', 'ingredient__name')[:5]
+        )
 
-        expired_foods = Food.objects.filter(
-            household=membership.household,
-            quantity__gte=1,
-            expiry_date__isnull=False,
-            expiry_date__lt=today
-        ).select_related('ingredient').order_by('expiry_date', 'ingredient__name')[:5]
+        expired_foods = (
+            Food.objects.filter(
+                household=membership.household,
+                quantity__gte=1,
+                expiry_date__isnull=False,
+                expiry_date__lt=today,
+            )
+            .select_related('ingredient')
+            .order_by('expiry_date', 'ingredient__name')[:5]
+        )
 
         recipe_suggestions = _build_recipe_suggestions(
             membership.household,
-            limit=5
+            limit=5,
         )
 
         if request.user.has_perm('app.view_wastelog'):
@@ -182,10 +244,14 @@ def food_list(request):
 
     role = get_user_role(request.user)
 
-    foods = Food.objects.filter(
-        household=membership.household,
-        quantity__gte=1
-    ).select_related('ingredient').order_by('expiry_date', 'ingredient__name')
+    foods = (
+        Food.objects.filter(
+            household=membership.household,
+            quantity__gte=1,
+        )
+        .select_related('ingredient')
+        .order_by('expiry_date', 'ingredient__name')
+    )
 
     tparams = {
         'foods': foods,
@@ -265,7 +331,7 @@ def recipe_list(request):
 
     recipes = Recipe.objects.filter(
         is_preloaded=True,
-        household__isnull=True
+        household__isnull=True,
     ).order_by('name')
 
     tparams = {
@@ -286,9 +352,9 @@ def recipe_detail(request, recipe_id):
     recipe = get_object_or_404(
         Recipe.objects.prefetch_related(
             'recipe_ingredients__ingredient',
-            'steps'
+            'steps',
         ),
-        pk=recipe_id
+        pk=recipe_id,
     )
 
     available_ingredient_ids = set()
@@ -300,7 +366,7 @@ def recipe_detail(request, recipe_id):
 
         available_foods = Food.objects.filter(
             household=membership.household,
-            quantity__gte=1
+            quantity__gte=1,
         )
 
         for food in available_foods:
@@ -481,27 +547,73 @@ def food_waste(request, pk):
 
 
 @login_required
-@permission_required('app.manage_household_members', raise_exception=True)
-def household_members(request):
+def household_manage(request):
     membership = get_membership(request.user)
+
     if membership is None:
+        if request.method == 'POST':
+            household_form = HouseholdForm(request.POST)
+            if household_form.is_valid():
+                household = household_form.save(commit=False)
+                household.created_by = request.user
+                household.save()
+
+                HouseholdMember.objects.create(
+                    user=request.user,
+                    household=household,
+                )
+
+                assign_user_role(request.user, 'HouseholdAdmin')
+                messages.success(request, 'Household created successfully.')
+                return redirect('app:household_manage')
+        else:
+            household_form = HouseholdForm()
+
+        return render(request, 'app/household/household_manage.html', {
+            'membership': None,
+            'role': get_user_role(request.user),
+            'household_form': household_form,
+            'member_form': None,
+            'members_with_roles': [],
+            'available_roles': AVAILABLE_ROLES,
+            'can_edit_household': True,
+            'can_manage_members': False,
+            'can_change_member_role': False,
+            'is_creating_household': True,
+        })
+
+    if not (
+        request.user.has_perm('app.change_household')
+        or request.user.has_perm('app.manage_household_members')
+    ):
         return redirect('app:dashboard')
 
-    members = (
-        HouseholdMember.objects
-        .select_related('user', 'household')
-        .filter(household=membership.household)
-        .order_by('user__username')
+    if request.method == 'POST':
+        if not request.user.has_perm('app.change_household'):
+            messages.error(request, 'You do not have permission to edit this household.')
+            return redirect('app:household_manage')
+
+        household_form = HouseholdForm(request.POST, instance=membership.household)
+        if household_form.is_valid():
+            household_form.save()
+            messages.success(request, 'Household updated successfully.')
+            return redirect('app:household_manage')
+    else:
+        household_form = HouseholdForm(instance=membership.household)
+
+    context = _build_household_manage_context(
+        request,
+        membership,
+        household_form=household_form,
     )
+    return render(request, 'app/household/household_manage.html', context)
 
-    tparams = {
-        'membership': membership,
-        'members': members,
-        'available_roles': ['HouseholdAdmin', 'InventoryManager', 'Member', 'Viewer'],
-        'role': get_user_role(request.user),
-    }
 
-    return render(request, 'app/members/member_list.html', tparams)
+@login_required
+@permission_required('app.manage_household_members', raise_exception=True)
+def household_members(request):
+    return redirect('app:household_manage')
+
 
 @login_required
 @permission_required('app.change_member_role', raise_exception=True)
@@ -517,20 +629,30 @@ def household_member_change_role(request, member_id):
     )
 
     if request.method != 'POST':
-        return redirect('app:household_members')
+        return redirect('app:household_manage')
 
     form = MemberRoleForm(request.POST)
     if form.is_valid():
         new_role = form.cleaned_data['role']
+        current_role = get_user_role(target_membership.user)
+
+        if (
+            current_role == 'HouseholdAdmin'
+            and new_role != 'HouseholdAdmin'
+            and _get_household_admin_count(membership.household) == 1
+        ):
+            messages.error(request, 'You cannot change the role of the last household admin.')
+            return redirect('app:household_manage')
+
         assign_user_role(target_membership.user, new_role)
         messages.success(
             request,
-            f'Role for {target_membership.user.username} updated to {new_role}.'
+            f'Role for {target_membership.user.username} updated to {new_role}.',
         )
     else:
         messages.error(request, 'Invalid role selected.')
 
-    return redirect('app:household_members')
+    return redirect('app:household_manage')
 
 
 @login_required
@@ -540,32 +662,78 @@ def household_member_add(request):
     if membership is None:
         return redirect('app:dashboard')
 
-    if request.method == 'POST':
-        form = HouseholdMemberCreateForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.email = form.cleaned_data.get('email', '')
-            user.first_name = form.cleaned_data.get('first_name', '')
-            user.last_name = form.cleaned_data.get('last_name', '')
-            user.save()
+    if request.method != 'POST':
+        return redirect('app:household_manage')
 
-            HouseholdMember.objects.create(
-                user=user,
-                household=membership.household,
-            )
+    form = HouseholdMemberCreateForm(request.POST)
+    if form.is_valid():
+        user = form.save(commit=False)
+        user.email = form.cleaned_data.get('email', '')
+        user.first_name = form.cleaned_data.get('first_name', '')
+        user.last_name = form.cleaned_data.get('last_name', '')
+        user.save()
 
-            assign_user_role(user, form.cleaned_data['role'])
+        HouseholdMember.objects.create(
+            user=user,
+            household=membership.household,
+        )
 
-            messages.success(
-                request,
-                f'User {user.username} was added to the household.'
-            )
-            return redirect('app:household_members')
-    else:
-        form = HouseholdMemberCreateForm()
+        assign_user_role(user, form.cleaned_data['role'])
 
-    return render(request, 'app/members/member_add.html', {
-        'form': form,
-        'membership': membership,
-        'role': get_user_role(request.user),
-    })
+        messages.success(
+            request,
+            f'User {user.username} was added to the household.',
+        )
+        return redirect('app:household_manage')
+
+    context = _build_household_manage_context(
+        request,
+        membership,
+        member_form=form,
+    )
+    return render(request, 'app/household/household_manage.html', context)
+
+
+@login_required
+def household_create(request):
+    return household_manage(request)
+
+
+@login_required
+def household_edit(request):
+    return household_manage(request)
+
+
+@login_required
+@permission_required('app.manage_household_members', raise_exception=True)
+def household_member_remove(request, member_id):
+    membership = get_membership(request.user)
+    if membership is None:
+        return redirect('app:dashboard')
+
+    target_membership = get_object_or_404(
+        HouseholdMember.objects.select_related('user', 'household'),
+        pk=member_id,
+        household=membership.household,
+    )
+
+    if request.method != 'POST':
+        return redirect('app:household_manage')
+
+    target_role = get_user_role(target_membership.user)
+
+    if (
+        target_role == 'HouseholdAdmin'
+        and _get_household_admin_count(membership.household) == 1
+    ):
+        messages.error(request, 'You cannot remove the last household admin.')
+        return redirect('app:household_manage')
+
+    removed_username = target_membership.user.username
+    target_user = target_membership.user
+
+    target_membership.delete()
+    target_user.groups.clear()
+
+    messages.success(request, f'{removed_username} was removed from the household.')
+    return redirect('app:household_manage')
