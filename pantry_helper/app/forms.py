@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
 
-from .models import Food, Ingredient, Category, WasteLog
+from .models import Food, Ingredient, Category, WasteLog, Household, HouseholdMember
 from .utils import get_user_role, ROLE_GROUPS
 
 # forms
@@ -121,3 +121,18 @@ class HouseholdMemberCreateForm(UserCreationForm):
             raise ValidationError('A user with this username already exists.')
 
         return username
+    
+
+class HouseholdForm(forms.ModelForm):
+    class Meta:
+        model = Household
+        fields = ['name', 'description']
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name', '').strip()
+        normalized_name = ' '.join(name.split())
+
+        if not normalized_name:
+            raise ValidationError('Household name is required.')
+
+        return normalized_name

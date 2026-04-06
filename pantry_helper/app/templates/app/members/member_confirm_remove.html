@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Remove household member</h1>
+
+  <p>
+    Are you sure you want to remove
+    <strong>{{ target_membership.user.username }}</strong>
+    from the household?
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Confirm removal</button>
+  </form>
+
+  <p><a href="{% url 'app:household_members' %}">Cancel</a></p>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+  {% if is_creating_household %}
+    <h1>Create household</h1>
+    <p>You are not part of a household yet. Create one to start managing pantry items and members.</p>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ household_form.as_p }}
+      <button type="submit">Create household</button>
+    </form>
+
+  {% else %}
+    <h1>Household</h1>
+
+    {% if membership %}
+      <p><strong>Household:</strong> {{ membership.household.name }}</p>
+      {% if role %}
+        <p><strong>Your role:</strong> {{ role }}</p>
+      {% endif %}
+    {% endif %}
+
+    {% if can_edit_household %}
+      <h2>Edit household details</h2>
+      <form method="post">
+        {% csrf_token %}
+        {{ household_form.as_p }}
+        <button type="submit">Save household</button>
+      </form>
+    {% endif %}
+
+    {% if can_manage_members %}
+      <h2>Add member</h2>
+      <form method="post" action="{% url 'app:household_member_add' %}">
+        {% csrf_token %}
+        {{ member_form.as_p }}
+        <button type="submit">Add member</button>
+      </form>
+    {% endif %}
+
+    <h2>Members</h2>
+
+    {% if members_with_roles %}
+      <ul>
+        {% for item in members_with_roles %}
+          <li>
+            <strong>{{ item.membership.user.username }}</strong>
+            {% if item.membership.user.first_name or item.membership.user.last_name %}
+              — {{ item.membership.user.first_name }} {{ item.membership.user.last_name }}
+            {% endif %}
+
+            {% if item.membership.user.email %}
+              <br>Email: {{ item.membership.user.email }}
+            {% endif %}
+
+            <br>Current role: {{ item.current_role|default:"No role assigned" }}
+
+            {% if can_change_member_role %}
+              <form method="post" action="{% url 'app:household_member_change_role' item.membership.pk %}">
+                {% csrf_token %}
+                <label for="role_{{ item.membership.pk }}">Role:</label>
+                <select name="role" id="role_{{ item.membership.pk }}">
+                  {% for role_name in available_roles %}
+                    <option value="{{ role_name }}" {% if item.current_role == role_name %}selected{% endif %}>
+                      {{ role_name }}
+                    </option>
+                  {% endfor %}
+                </select>
+                <button type="submit">Update role</button>
+              </form>
+            {% endif %}
+
+            {% if can_manage_members %}
+              <form method="post" action="{% url 'app:household_member_remove' item.membership.pk %}">
+                {% csrf_token %}
+                <button type="submit">Remove member</button>
+              </form>
+            {% endif %}
+          </li>
+          <br>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No household members found.</p>
+    {% endif %}
+  {% endif %}
+{% endblock %}

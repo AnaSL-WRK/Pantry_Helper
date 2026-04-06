@@ -7,6 +7,7 @@
         <p><strong>Household:</strong> {{ membership.household.name }}</p>
     {% else %}
         <p>This user does not belong to a household yet.</p>
+        <p><a href="{% url 'app:household_create' %}">Create household</a></p>
     {% endif %}
 
     {% if role %}

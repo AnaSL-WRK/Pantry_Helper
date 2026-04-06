@@ -1,37 +1,47 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <title>Pantry Helper</title>
+ <meta charset="UTF-8">
+ <title>Pantry Helper</title>
 </head>
 <body>
-    <nav>
-        {% if user.is_authenticated %}
-            <a href="{% url 'app:dashboard' %}">Dashboard</a>
+ <nav>
+ {% if user.is_authenticated %}
+ <a href="{% url 'app:dashboard' %}">Dashboard</a>
 
-            {% if perms.app.view_food %}
-                <a href="{% url 'app:food_list' %}">Pantry</a>
-            {% endif %}
+ {% if perms.app.view_food %}
+ <a href="{% url 'app:food_list' %}">Pantry</a>
+ {% endif %}
 
-            {% if perms.app.add_food %}
-                <a href="{% url 'app:food_new' %}">Add food</a>
-            {% endif %}
-        {% endif %}
+ {% if perms.app.add_food %}
+ <a href="{% url 'app:food_new' %}">Add food</a>
+ {% endif %}
 
-        {% if perms.app.view_recipe %}
-            <a href="{% url 'app:recipe_list' %}">Recipes</a>
-        {% endif %}
+ {% if perms.app.view_recipe %}
+ <a href="{% url 'app:recipe_list' %}">Recipes</a>
+ {% endif %}
 
-        {% include "loginpartial.html" %}
+ {% if user.is_authenticated %}
+   {% if perms.app.change_household or perms.app.manage_household_members or not user.household_member %}
+     <a href="{% url 'app:household_manage' %}">Household</a>
+   {% endif %}
+ {% endif %}
+ {% endif %}
 
-        {% if perms.app.manage_household_members %}
-            <a href="{% url 'app:household_members' %}">Members</a>
-        {% endif %}
-    </nav>
+ {% include "loginpartial.html" %}
+ </nav>
 
-    <hr>
+ <hr>
 
-    {% block content %}
-    {% endblock %}
+ {% if messages %}
+   <ul>
+     {% for message in messages %}
+       <li>{{ message }}</li>
+     {% endfor %}
+   </ul>
+ {% endif %}
+
+ {% block content %}
+ {% endblock %}
 </body>
 </html>
