@@ -1,24 +1,48 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>Recipes</h1>
+<h1>Recipes</h1>
 
-  {% if perms.app.view_suggested_recipes %}
-    <p>
-      <a href="{% url 'app:suggested_recipes' %}">View suggested recipes</a>
-    </p>
-  {% endif %}
+{% if perms.app.view_suggested_recipes %}
+    <p><a href="{% url 'app:suggested_recipes' %}">View suggested recipes</a></p>
+{% endif %}
 
-  {% if recipes %}
+{% if can_add_recipe %}
+    <p><a href="{% url 'app:recipe_new' %}">Create recipe</a></p>
+{% endif %}
+
+{% if household_recipes %}
+    <h2>Your household recipes</h2>
     <ul>
-      {% for recipe in recipes %}
-        <li>
-          <a href="{% url 'app:recipe_detail' recipe.id %}">{{ recipe.name }}</a>
-          {% if recipe.author %} — {{ recipe.author }}{% endif %}
-        </li>
-      {% endfor %}
+        {% for recipe in household_recipes %}
+            <li>
+                <a href="{% url 'app:recipe_detail' recipe.id %}">{{ recipe.name }}</a>
+                {% if recipe.author %} — {{ recipe.author }}{% endif %}
+
+                {% if perms.app.change_recipe %}
+                    | <a href="{% url 'app:recipe_edit' recipe.id %}">Edit</a>
+                {% endif %}
+
+                {% if perms.app.delete_recipe %}
+                    | <a href="{% url 'app:recipe_delete' recipe.id %}">Delete</a>
+                {% endif %}
+            </li>
+        {% endfor %}
     </ul>
-  {% else %}
+{% endif %}
+
+<h2>Preloaded recipes</h2>
+
+{% if preloaded_recipes %}
+    <ul>
+        {% for recipe in preloaded_recipes %}
+            <li>
+                <a href="{% url 'app:recipe_detail' recipe.id %}">{{ recipe.name }}</a>
+                {% if recipe.author %} — {{ recipe.author }}{% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
     <p>No recipes available.</p>
-  {% endif %}
+{% endif %}
 {% endblock %}

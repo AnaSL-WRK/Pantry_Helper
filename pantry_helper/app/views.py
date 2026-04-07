@@ -2,21 +2,13 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from .forms import (
-    FoodForm,
-    FoodQuantityForm,
-    HouseholdForm,
-    HouseholdMemberCreateForm,
-    IngredientForm,
-    MemberRoleForm,
-    WasteForm,
-)
-from .models import Food, Household, HouseholdMember, Ingredient, Recipe, WasteLog
+from .forms import FoodForm, FoodQuantityForm, HouseholdForm, HouseholdMemberCreateForm, IngredientForm, MemberRoleForm, WasteForm, RecipeForm, RecipeIngredientFormSet, RecipeStepFormSet
+from .models import Food, Household, HouseholdMember, Ingredient, Recipe, WasteLog, RecipeIngredient, RecipeStep
 from .utils import assign_user_role, get_membership, get_user_role
 
 
@@ -323,21 +315,93 @@ def ingredient_new(request):
     return render(request, 'app/ingredientform.html', tparams)
 
 
+def _get_visible_recipes_queryset(membership):
+    base_queryset = Recipe.objects.select_related(
+        'household',
+        'created_by',
+    ).prefetch_related(
+        'recipe_ingredients__ingredient',
+        'steps',
+    )
+
+    visible_filter = Q(is_preloaded=True, household__isnull=True)
+
+    if membership is not None:
+        visible_filter |= Q(household=membership.household)
+
+    return base_queryset.filter(visible_filter).order_by('name')
+
+
+def _save_recipe_children(recipe, ingredient_formset, step_formset):
+    RecipeIngredient.objects.filter(recipe=recipe).delete()
+    RecipeStep.objects.filter(recipe=recipe).delete()
+
+    ingredient_position = 1
+    for form in ingredient_formset.forms:
+        if not hasattr(form, 'cleaned_data') or not form.cleaned_data:
+            continue
+
+        if form.cleaned_data.get('DELETE'):
+            continue
+
+        ingredient = form.cleaned_data.get('ingredient')
+        if ingredient is None:
+            continue
+
+        RecipeIngredient.objects.create(
+            recipe=recipe,
+            ingredient=ingredient,
+            quantity=form.cleaned_data.get('quantity'),
+            unit=(form.cleaned_data.get('unit') or '').strip(),
+            line_text=(form.cleaned_data.get('line_text') or '').strip(),
+            position=ingredient_position,
+        )
+        ingredient_position += 1
+
+    step_position = 1
+    for form in step_formset.forms:
+        if not hasattr(form, 'cleaned_data') or not form.cleaned_data:
+            continue
+
+        if form.cleaned_data.get('DELETE'):
+            continue
+
+        step_text = (form.cleaned_data.get('step_text') or '').strip()
+        if not step_text:
+            continue
+
+        RecipeStep.objects.create(
+            recipe=recipe,
+            step_text=step_text,
+            position=step_position,
+        )
+        step_position += 1
+
+
 @login_required
 @permission_required('app.view_recipe', raise_exception=True)
 def recipe_list(request):
     membership = get_membership(request.user)
     role = get_user_role(request.user)
 
-    recipes = Recipe.objects.filter(
+    preloaded_recipes = Recipe.objects.filter(
         is_preloaded=True,
         household__isnull=True,
     ).order_by('name')
 
+    household_recipes = Recipe.objects.none()
+    if membership is not None:
+        household_recipes = Recipe.objects.filter(
+            household=membership.household,
+            is_preloaded=False,
+        ).order_by('name')
+
     tparams = {
-        'recipes': recipes,
+        'preloaded_recipes': preloaded_recipes,
+        'household_recipes': household_recipes,
         'membership': membership,
         'role': role,
+        'can_add_recipe': request.user.has_perm('app.add_recipe') and membership is not None,
     }
 
     return render(request, 'app/recipes/recipelist.html', tparams)
@@ -349,11 +413,19 @@ def recipe_detail(request, recipe_id):
     membership = get_membership(request.user)
     role = get_user_role(request.user)
 
+    visible_filter = Q(is_preloaded=True, household__isnull=True)
+    if membership is not None:
+        visible_filter |= Q(household=membership.household)
+
     recipe = get_object_or_404(
-        Recipe.objects.prefetch_related(
+        Recipe.objects.select_related(
+            'household',
+            'created_by',
+        ).prefetch_related(
             'recipe_ingredients__ingredient',
             'steps',
         ),
+        visible_filter,
         pk=recipe_id,
     )
 
@@ -392,6 +464,12 @@ def recipe_detail(request, recipe_id):
     total_ingredients = len(recipe_ingredients)
     missing_count = total_ingredients - available_count
 
+    is_household_recipe = (
+        membership is not None
+        and recipe.household_id == membership.household_id
+        and not recipe.is_preloaded
+    )
+
     tparams = {
         'recipe': recipe,
         'recipe_ingredients': recipe_ingredients,
@@ -401,9 +479,130 @@ def recipe_detail(request, recipe_id):
         'expiring_match_count': expiring_match_count,
         'membership': membership,
         'role': role,
+        'is_household_recipe': is_household_recipe,
+        'can_manage_recipe': is_household_recipe and request.user.has_perm('app.change_recipe'),
+        'can_delete_recipe': is_household_recipe and request.user.has_perm('app.delete_recipe'),
     }
 
     return render(request, 'app/recipes/recipedetail.html', tparams)
+
+@login_required
+@permission_required('app.add_recipe', raise_exception=True)
+def recipe_new(request):
+    membership = get_membership(request.user)
+    if membership is None:
+        return redirect('app:dashboard')
+
+    role = get_user_role(request.user)
+
+    if request.method == 'POST':
+        form = RecipeForm(request.POST)
+        ingredient_formset = RecipeIngredientFormSet(request.POST, prefix='ingredients')
+        step_formset = RecipeStepFormSet(request.POST, prefix='steps')
+
+        if form.is_valid() and ingredient_formset.is_valid() and step_formset.is_valid():
+            recipe = form.save(commit=False)
+            recipe.household = membership.household
+            recipe.created_by = request.user
+            recipe.is_preloaded = False
+            recipe.save()
+
+            _save_recipe_children(recipe, ingredient_formset, step_formset)
+
+            messages.success(request, 'Recipe created successfully.')
+            return redirect('app:recipe_detail', recipe_id=recipe.pk)
+    else:
+        form = RecipeForm()
+        ingredient_formset = RecipeIngredientFormSet(prefix='ingredients')
+        step_formset = RecipeStepFormSet(prefix='steps')
+
+    return render(request, 'app/recipes/recipeform.html', {
+        'form': form,
+        'ingredient_formset': ingredient_formset,
+        'step_formset': step_formset,
+        'membership': membership,
+        'role': role,
+        'page_title': 'Create recipe',
+        'submit_label': 'Save recipe',
+    })
+
+
+@login_required
+@permission_required('app.change_recipe', raise_exception=True)
+def recipe_edit(request, recipe_id):
+    membership = get_membership(request.user)
+    if membership is None:
+        return redirect('app:dashboard')
+
+    role = get_user_role(request.user)
+
+    recipe = get_object_or_404(
+        Recipe,
+        pk=recipe_id,
+        household=membership.household,
+        is_preloaded=False,
+    )
+
+    if request.method == 'POST':
+        form = RecipeForm(request.POST, instance=recipe)
+        ingredient_formset = RecipeIngredientFormSet(
+            request.POST,
+            instance=recipe,
+            prefix='ingredients',
+        )
+        step_formset = RecipeStepFormSet(
+            request.POST,
+            instance=recipe,
+            prefix='steps',
+        )
+
+        if form.is_valid() and ingredient_formset.is_valid() and step_formset.is_valid():
+            form.save()
+            _save_recipe_children(recipe, ingredient_formset, step_formset)
+
+            messages.success(request, 'Recipe updated successfully.')
+            return redirect('app:recipe_detail', recipe_id=recipe.pk)
+    else:
+        form = RecipeForm(instance=recipe)
+        ingredient_formset = RecipeIngredientFormSet(instance=recipe, prefix='ingredients')
+        step_formset = RecipeStepFormSet(instance=recipe, prefix='steps')
+
+    return render(request, 'app/recipes/recipeform.html', {
+        'form': form,
+        'ingredient_formset': ingredient_formset,
+        'step_formset': step_formset,
+        'membership': membership,
+        'role': role,
+        'page_title': 'Edit recipe',
+        'submit_label': 'Update recipe',
+        'recipe': recipe,
+    })
+
+
+@login_required
+@permission_required('app.delete_recipe', raise_exception=True)
+def recipe_delete(request, recipe_id):
+    membership = get_membership(request.user)
+    if membership is None:
+        return redirect('app:dashboard')
+
+    recipe = get_object_or_404(
+        Recipe,
+        pk=recipe_id,
+        household=membership.household,
+        is_preloaded=False,
+    )
+
+    if request.method == 'POST':
+        recipe.delete()
+        messages.success(request, 'Recipe deleted successfully.')
+        return redirect('app:recipe_list')
+
+    return render(request, 'app/recipes/recipe_confirm_delete.html', {
+        'recipe': recipe,
+        'membership': membership,
+        'role': get_user_role(request.user),
+    })
 
 
 @login_required

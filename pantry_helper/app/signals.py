@@ -3,7 +3,6 @@ from django.contrib.auth.models import Group, Permission
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 
-
 ROLE_PERMISSIONS = {
     'Viewer': [
         'view_food',
@@ -46,6 +45,9 @@ ROLE_PERMISSIONS = {
         'change_food',
         'delete_food',
         'add_ingredient',
+        'add_recipe',
+        'change_recipe',
+        'delete_recipe',
         'manage_household_members',
         'change_member_role',
         'add_household',
