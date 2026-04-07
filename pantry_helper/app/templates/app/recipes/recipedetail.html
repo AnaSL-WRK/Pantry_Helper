@@ -1,74 +1,74 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>{{ recipe.name }}</h1>
+<h1>{{ recipe.name }}</h1>
 
-  {% if recipe.author %}
+{% if is_household_recipe %}
+    <p><strong>Recipe type:</strong> Household recipe</p>
+{% else %}
+    <p><strong>Recipe type:</strong> Preloaded recipe</p>
+{% endif %}
+
+{% if recipe.author %}
     <p><strong>Author:</strong> {{ recipe.author }}</p>
-  {% endif %}
+{% endif %}
 
-  {% if recipe.source_site %}
+{% if recipe.source_site %}
     <p><strong>Source:</strong> {{ recipe.source_site }}</p>
-  {% endif %}
+{% endif %}
 
-  {% if recipe.source_url %}
+{% if recipe.source_url %}
     <p>
-      <strong>Original recipe:</strong>
-      <a href="{{ recipe.source_url }}" target="_blank">{{ recipe.source_url }}</a>
+        <strong>Original recipe:</strong>
+        <a href="{{ recipe.source_url }}" target="_blank">{{ recipe.source_url }}</a>
     </p>
-  {% endif %}
+{% endif %}
 
-  <p>
-    <strong>You have:</strong> {{ available_count }} /
-    {{ recipe_ingredients|length }} ingredients
-  </p>
+{% if can_manage_recipe %}
+    <p>
+        <a href="{% url 'app:recipe_edit' recipe.id %}">Edit recipe</a>
+        {% if can_delete_recipe %}
+            | <a href="{% url 'app:recipe_delete' recipe.id %}">Delete recipe</a>
+        {% endif %}
+    </p>
+{% endif %}
 
-  <p>
-    <strong>Missing:</strong> {{ missing_count }}
-  </p>
+<p><strong>You have:</strong> {{ available_count }} / {{ recipe_ingredients|length }} ingredients</p>
+<p><strong>Missing:</strong> {{ missing_count }}</p>
+<p><strong>Uses expiring soon ingredients:</strong> {{ expiring_match_count }}</p>
 
-  <p>
-    <strong>Uses expiring soon ingredients:</strong> {{ expiring_match_count }}
-  </p>
-
-  <h2>Ingredients</h2>
-  <ul>
+<h2>Ingredients</h2>
+<ul>
     {% for recipe_ingredient in recipe_ingredients %}
-      <li>
-        {{ recipe_ingredient.ingredient.name }}
+        <li>
+            {{ recipe_ingredient.ingredient.name }}
+            {% if recipe_ingredient.quantity %} — {{ recipe_ingredient.quantity }}{% endif %}
+            {% if recipe_ingredient.unit %} {{ recipe_ingredient.unit }}{% endif %}
 
-        {% if recipe_ingredient.quantity %}
-          — {{ recipe_ingredient.quantity }}
-        {% endif %}
+            {% if recipe_ingredient.is_available %}
+                ✅ in pantry
+            {% else %}
+                ❌ missing
+            {% endif %}
 
-        {% if recipe_ingredient.unit %}
-          {{ recipe_ingredient.unit }}
-        {% endif %}
+            {% if recipe_ingredient.is_expiring_soon %}
+                <strong> (expiring soon)</strong>
+            {% endif %}
 
-        {% if recipe_ingredient.is_available %}
-          ✅ in pantry
-        {% else %}
-          ❌ missing
-        {% endif %}
-
-        {% if recipe_ingredient.is_expiring_soon %}
-          <strong> (expiring soon)</strong>
-        {% endif %}
-
-        {% if recipe_ingredient.line_text %}
-          <br>
-          <small>{{ recipe_ingredient.line_text }}</small>
-        {% endif %}
-      </li>
+            {% if recipe_ingredient.line_text %}
+                <br>
+                <small>{{ recipe_ingredient.line_text }}</small>
+            {% endif %}
+        </li>
     {% endfor %}
-  </ul>
+</ul>
 
-  <h2>Steps</h2>
-  <ol>
+<h2>Steps</h2>
+<ol>
     {% for step in steps %}
-      <li>{{ step.step_text }}</li>
+        <li>{{ step.step_text }}</li>
     {% endfor %}
-  </ol>
+</ol>
 
-  <p><a href="{% url 'app:recipe_list' %}">Back to recipes</a></p>
+<p><a href="{% url 'app:recipe_list' %}">Back to recipes</a></p>
 {% endblock %}

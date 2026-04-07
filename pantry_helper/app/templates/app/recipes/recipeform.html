@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ page_title }}</h1>
+
+<form method="post">
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <h2>Ingredients</h2>
+    {{ ingredient_formset.management_form }}
+
+    {% for ingredient_form in ingredient_formset %}
+        <fieldset>
+            {{ ingredient_form.id }}
+            {{ ingredient_form.as_p }}
+        </fieldset>
+    {% endfor %}
+
+    <h2>Steps</h2>
+    {{ step_formset.management_form }}
+
+    {% for step_form in step_formset %}
+        <fieldset>
+            {{ step_form.id }}
+            {{ step_form.as_p }}
+        </fieldset>
+    {% endfor %}
+
+    <button type="submit">{{ submit_label }}</button>
+</form>
+
+<p><a href="{% url 'app:recipe_list' %}">Back to recipes</a></p>
+{% endblock %}
