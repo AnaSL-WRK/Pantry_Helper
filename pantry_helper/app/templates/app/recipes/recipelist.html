@@ -10,9 +10,15 @@
         <p class="page-subtitle">Browse available recipes and open each one to compare against your pantry.</p>
     </div>
 
-    {% if perms.app.view_suggested_recipes %}
-        <a href="{% url 'app:suggested_recipes' %}" class="btn">View suggested recipes</a>
-    {% endif %}
+    <div class="page-actions">
+        {% if perms.app.view_suggested_recipes %}
+            <a href="{% url 'app:suggested_recipes' %}" class="btn">View suggested recipes</a>
+        {% endif %}
+
+        {% if can_add_recipe %}
+            <a href="{% url 'app:recipe_new' %}" class="btn btn-secondary">Create recipe</a>
+        {% endif %}
+    </div>
 </div>
 
 {% if recipes %}

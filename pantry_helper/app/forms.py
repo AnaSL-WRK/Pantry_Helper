@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.forms import BaseInlineFormSet, inlineformset_factory
 
 
-from .models import Food, Ingredient, Category, WasteLog, Household, HouseholdMember, Recipe, RecipeIngredient, RecipeStep
+from .models import Food, Ingredient, Category, WasteLog, Household, HouseholdMember, Recipe, RecipeIngredient, RecipeStep, Unit
 from .utils import get_user_role, ROLE_GROUPS
 
 # forms
@@ -36,12 +36,15 @@ class FoodForm(forms.ModelForm):
         fields = ['ingredient', 'quantity', 'unit', 'location', 'expiry_date', 'notes']
         widgets = {
             'expiry_date': forms.DateInput(attrs={'type': 'date'}),
+            'unit': forms.Select(choices=Unit.choices),
+        
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['ingredient'].queryset = Ingredient.objects.select_related('category').order_by('name')
         self.fields['ingredient'].empty_label = 'Select an ingredient'
+        self.fields['unit'].choices = Unit.choices
 
     def clean_quantity(self):
         quantity = self.cleaned_data.get('quantity')
@@ -77,6 +80,7 @@ class FoodQuantityForm(forms.Form):
         return quantity
 
 
+
 class WasteForm(forms.Form):
     quantity = forms.IntegerField(min_value=1, initial=1)
     reason = forms.ChoiceField(choices=WasteLog.WasteReason.choices)
@@ -84,6 +88,10 @@ class WasteForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.food = kwargs.pop('food', None)
         super().__init__(*args, **kwargs)
+
+        if self.food:
+            self.fields['quantity'].label = f'Quantity ({self.food.unit})'
+            self.fields['quantity'].help_text = f'Available: {self.food.quantity} {self.food.unit}'
 
     def clean_quantity(self):
         quantity = self.cleaned_data.get('quantity')
@@ -230,9 +238,10 @@ RecipeIngredientFormSet = inlineformset_factory(
     RecipeIngredient,
     fields=['ingredient', 'quantity', 'unit', 'line_text'],
     formset=BaseRecipeIngredientFormSet,
-    extra=4,
+    extra=1,
     can_delete=True,
     widgets={
+        'unit': forms.Select(choices=[('', '---------')] + list(Unit.choices)),
         'line_text': forms.TextInput(attrs={'placeholder': 'Optional original ingredient line'}),
     },
 )
@@ -242,7 +251,7 @@ RecipeStepFormSet = inlineformset_factory(
     RecipeStep,
     fields=['step_text'],
     formset=BaseRecipeStepFormSet,
-    extra=4,
+    extra=1,
     can_delete=True,
     widgets={
         'step_text': forms.Textarea(attrs={'rows': 2}),

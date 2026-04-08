@@ -15,20 +15,6 @@
     {% endif %}
 </div>
 
-<div class="card role-note">
-    <h2>Your access</h2>
-    {% if role == 'Viewer' %}
-        <p>You are in viewer mode. You can see pantry items, but you cannot change them.</p>
-    {% elif role == 'Member' %}
-        <p>You are in member mode. You can mark items as consumed or wasted, but you cannot add, edit, or delete foods.</p>
-    {% elif role == 'InventoryManager' %}
-        <p>You are in inventory manager mode. You can fully manage pantry items.</p>
-    {% elif role == 'HouseholdAdmin' %}
-        <p>You are in household admin mode. You can fully manage pantry items and the household.</p>
-    {% else %}
-        <p>Your role permissions will determine which actions are available.</p>
-    {% endif %}
-</div>
 
 {% if foods %}
     <div class="card-grid card-grid-2">

@@ -12,7 +12,7 @@
 </div>
 
 {% if membership %}
-    <div class="card-grid card-grid-4">
+    <div class="card-grid card-grid-3">
         <article class="card">
             <span class="stat-label">Household</span>
             <div class="stat-value">{{ membership.household.name }}</div>
@@ -28,10 +28,6 @@
             <div class="stat-value">{{ expiring_foods|length }}</div>
         </article>
 
-        <article class="card">
-            <span class="stat-label">Waste logged</span>
-            <div class="stat-value">{{ waste_total }}</div>
-        </article>
     </div>
 {% else %}
     <section class="card empty-state">
@@ -235,22 +231,21 @@
 {% if perms.app.view_wastelog %}
     <section class="card" style="margin-top: 1rem;">
         <h2>Waste summary</h2>
-        <p class="page-subtitle">Total wasted units: {{ waste_total }}</p>
 
         <div class="list-stack">
-            {% for item in top_wasted_ingredients %}
-                <div class="list-row">
-                    <div class="list-row-head">
-                        <strong>{{ item.ingredient__name }}</strong>
-                        <span class="tag tag-warning">{{ item.total_wasted }}</span>
-                    </div>
+        {% for item in top_wasted_ingredients %}
+            <div class="list-row">
+                <div class="list-row-head">
+                    <strong>{{ item.ingredient__name }}</strong>
+                    <span class="tag tag-warning">{{ item.total_wasted }} {{ item.unit }}</span>
                 </div>
-            {% empty %}
-                <div class="empty-state">
-                    <p class="muted">No waste registered yet.</p>
-                </div>
-            {% endfor %}
-        </div>
-    </section>
+            </div>
+        {% empty %}
+            <div class="empty-state">
+                <p class="muted">No waste registered yet.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
 {% endif %}
 {% endblock %}

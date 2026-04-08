@@ -18,7 +18,21 @@
 
 <form method="post" class="card form-card">
     {% csrf_token %}
-    {{ form.as_p }}
+
+    <div class="form-field">
+        <label for="{{ form.quantity.id_for_label }}">{{ form.quantity.label }}</label>
+        {{ form.quantity }}
+        {% if form.quantity.help_text %}
+            <p class="helper-text">{{ form.quantity.help_text }}</p>
+        {% endif %}
+        {{ form.quantity.errors }}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+        {{ form.reason }}
+        {{ form.reason.errors }}
+    </div>
 
     <div class="page-actions">
         <button type="submit" class="btn">{{ submit_label }}</button>
