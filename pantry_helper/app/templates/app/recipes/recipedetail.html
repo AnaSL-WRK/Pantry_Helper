@@ -1,74 +1,98 @@
 {% extends "base.html" %}
 
+{% block title %}{{ recipe.name }} | Pantry Helper{% endblock %}
+
 {% block content %}
-<h1>{{ recipe.name }}</h1>
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Recipe details</span>
+        <h1>{{ recipe.name }}</h1>
 
-{% if is_household_recipe %}
-    <p><strong>Recipe type:</strong> Household recipe</p>
-{% else %}
-    <p><strong>Recipe type:</strong> Preloaded recipe</p>
-{% endif %}
+        <div class="tag-row">
+            {% if recipe.author %}
+                <span class="tag tag-muted">Author: {{ recipe.author }}</span>
+            {% endif %}
 
-{% if recipe.author %}
-    <p><strong>Author:</strong> {{ recipe.author }}</p>
-{% endif %}
+            {% if recipe.source_site %}
+                <span class="tag tag-muted">Source: {{ recipe.source_site }}</span>
+            {% endif %}
+        </div>
+    </div>
 
-{% if recipe.source_site %}
-    <p><strong>Source:</strong> {{ recipe.source_site }}</p>
-{% endif %}
-
-{% if recipe.source_url %}
-    <p>
-        <strong>Original recipe:</strong>
-        <a href="{{ recipe.source_url }}" target="_blank">{{ recipe.source_url }}</a>
-    </p>
-{% endif %}
-
-{% if can_manage_recipe %}
-    <p>
-        <a href="{% url 'app:recipe_edit' recipe.id %}">Edit recipe</a>
-        {% if can_delete_recipe %}
-            | <a href="{% url 'app:recipe_delete' recipe.id %}">Delete recipe</a>
+    <div class="page-actions">
+        {% if recipe.source_url %}
+            <a href="{{ recipe.source_url }}" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">
+                Original recipe
+            </a>
         {% endif %}
-    </p>
-{% endif %}
+        <a href="{% url 'app:recipe_list' %}" class="btn">Back to recipes</a>
+    </div>
+</div>
 
-<p><strong>You have:</strong> {{ available_count }} / {{ recipe_ingredients|length }} ingredients</p>
-<p><strong>Missing:</strong> {{ missing_count }}</p>
-<p><strong>Uses expiring soon ingredients:</strong> {{ expiring_match_count }}</p>
+<div class="card-grid card-grid-3">
+    <article class="card">
+        <span class="stat-label">Available ingredients</span>
+        <div class="stat-value">{{ available_count }} / {{ recipe_ingredients|length }}</div>
+    </article>
 
-<h2>Ingredients</h2>
-<ul>
-    {% for recipe_ingredient in recipe_ingredients %}
-        <li>
-            {{ recipe_ingredient.ingredient.name }}
-            {% if recipe_ingredient.quantity %} — {{ recipe_ingredient.quantity }}{% endif %}
-            {% if recipe_ingredient.unit %} {{ recipe_ingredient.unit }}{% endif %}
+    <article class="card">
+        <span class="stat-label">Missing ingredients</span>
+        <div class="stat-value">{{ missing_count }}</div>
+    </article>
 
-            {% if recipe_ingredient.is_available %}
-                ✅ in pantry
-            {% else %}
-                ❌ missing
-            {% endif %}
+    <article class="card">
+        <span class="stat-label">Expiring soon used</span>
+        <div class="stat-value">{{ expiring_match_count }}</div>
+    </article>
+</div>
 
-            {% if recipe_ingredient.is_expiring_soon %}
-                <strong> (expiring soon)</strong>
-            {% endif %}
+<div class="dashboard-grid">
+    <section class="card">
+        <h2>Ingredients</h2>
 
-            {% if recipe_ingredient.line_text %}
-                <br>
-                <small>{{ recipe_ingredient.line_text }}</small>
-            {% endif %}
-        </li>
-    {% endfor %}
-</ul>
+        <div class="list-stack">
+            {% for recipe_ingredient in recipe_ingredients %}
+                <div class="list-row">
+                    <div class="list-row-head">
+                        <div>
+                            <h3>{{ recipe_ingredient.ingredient.name }}</h3>
+                            <p class="muted">
+                                {% if recipe_ingredient.quantity %}{{ recipe_ingredient.quantity }}{% endif %}
+                                {% if recipe_ingredient.unit %} {{ recipe_ingredient.unit }}{% endif %}
+                            </p>
 
-<h2>Steps</h2>
-<ol>
-    {% for step in steps %}
-        <li>{{ step.step_text }}</li>
-    {% endfor %}
-</ol>
+                            {% if recipe_ingredient.line_text %}
+                                <p class="helper-text">{{ recipe_ingredient.line_text }}</p>
+                            {% endif %}
+                        </div>
 
-<p><a href="{% url 'app:recipe_list' %}">Back to recipes</a></p>
+                        <div class="tag-row">
+                            {% if recipe_ingredient.is_available %}
+                                <span class="tag tag-success">In pantry</span>
+                            {% else %}
+                                <span class="tag tag-warning">Missing</span>
+                            {% endif %}
+
+                            {% if recipe_ingredient.is_expiring_soon %}
+                                <span class="tag">Expiring soon</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Steps</h2>
+
+        <ol class="step-list">
+            {% for step in steps %}
+                <li>{{ step.step_text }}</li>
+            {% empty %}
+                <li>No steps available.</li>
+            {% endfor %}
+        </ol>
+    </section>
+</div>
 {% endblock %}

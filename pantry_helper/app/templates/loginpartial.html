@@ -1,10 +1,12 @@
 {% if user.is_authenticated %}
-    <span>Hello, {{ user.username }}</span>
+    <div class="auth-box">
+        <span class="tag tag-muted">Hello, {{ user.username }}</span>
 
-    <form action="{% url 'logout' %}" method="post" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit">Logout</button>
-    </form>
+        <form action="{% url 'logout' %}" method="post" class="inline-form">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-light">Logout</button>
+        </form>
+    </div>
 {% else %}
-    <a href="{% url 'login' %}">Login</a>
+    <a href="{% url 'login' %}" class="btn btn-light">Login</a>
 {% endif %}

@@ -1,159 +1,256 @@
 {% extends "base.html" %}
 
+{% block title %}Dashboard | Pantry Helper{% endblock %}
+
 {% block content %}
-<h1>Dashboard</h1>
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Overview</span>
+        <h1>Dashboard</h1>
+        <p class="page-subtitle">Your household summary, permissions, pantry status, and recipe suggestions.</p>
+    </div>
+</div>
 
 {% if membership %}
-    <p><strong>Household:</strong> {{ membership.household.name }}</p>
+    <div class="card-grid card-grid-4">
+        <article class="card">
+            <span class="stat-label">Household</span>
+            <div class="stat-value">{{ membership.household.name }}</div>
+        </article>
+
+        <article class="card">
+            <span class="stat-label">Your role</span>
+            <div class="stat-value">{{ role|default:"No role" }}</div>
+        </article>
+
+        <article class="card">
+            <span class="stat-label">Expiring soon</span>
+            <div class="stat-value">{{ expiring_foods|length }}</div>
+        </article>
+
+        <article class="card">
+            <span class="stat-label">Waste logged</span>
+            <div class="stat-value">{{ waste_total }}</div>
+        </article>
+    </div>
 {% else %}
-    <p>This user does not belong to a household yet.</p>
-    <p><a href="{% url 'app:household_manage' %}">Create household</a></p>
+    <section class="card empty-state">
+        <span class="eyebrow">Get started</span>
+        <h2>You are not part of a household yet.</h2>
+        <p class="page-subtitle">Create a household first so you can start managing pantry items and recipes.</p>
+        <div class="page-actions" style="justify-content: center;">
+            <a href="{% url 'app:household_manage' %}" class="btn">Create household</a>
+        </div>
+    </section>
 {% endif %}
-
 {% if role %}
-    <p><strong>Your role:</strong> {{ role }}</p>
+    <details class="card collapsible-card" style="margin-top: 1rem;">
+        <summary class="collapsible-summary">
+            <div>
+                <h2>What you can do</h2>
+                <p class="page-subtitle">Click to view your permissions.</p>
+            </div>
+            <span class="collapse-arrow">⌄</span>
+        </summary>
+
+        <div class="collapsible-content">
+            {% if role == 'Viewer' %}
+                <p>You are in <strong>read-only mode</strong>.</p>
+                <ul class="step-list">
+                    <li>You can view pantry items, recipes, and suggested recipes.</li>
+                    <li>You cannot manage pantry items, food usage, recipes, or the household.</li>
+                </ul>
+
+            {% elif role == 'Member' %}
+                <p>You can help track food usage.</p>
+                <ul class="step-list">
+                    <li>You can view pantry items, recipes, and suggested recipes.</li>
+                    <li>You can manage food usage by marking items as consumed or wasted.</li>
+                    <li>You cannot manage pantry items, recipes, or the household.</li>
+                </ul>
+
+            {% elif role == 'InventoryManager' %}
+                <p>You can manage pantry stock, but not the household.</p>
+                <ul class="step-list">
+                    <li>You can view pantry items, recipes, and suggested recipes.</li>
+                    <li>You can manage pantry items by adding, editing, and deleting food.</li>
+                    <li>You can manage food usage by marking items as consumed or wasted.</li>
+                    <li>You can add ingredients.</li>
+                    <li>You cannot manage household recipes or household members.</li>
+                </ul>
+
+            {% elif role == 'HouseholdAdmin' %}
+                <p>You have full household access.</p>
+                <ul class="step-list">
+                    <li>You can view pantry items, recipes, and suggested recipes.</li>
+                    <li>You can manage pantry items by adding, editing, and deleting food.</li>
+                    <li>You can manage food usage by marking items as consumed or wasted.</li>
+                    <li>You can add ingredients.</li>
+                    <li>You can manage household recipes by creating, editing, and deleting them.</li>
+                    <li>You can manage the household by editing details, adding members, changing roles, and removing members.</li>
+                </ul>
+            {% endif %}
+        </div>
+    </details>
 {% endif %}
 
-<hr>
+<section class="card" style="margin-top: 1rem;">
+    <h2>Quick actions</h2>
+    <div class="page-actions">
+        {% if perms.app.view_food %}
+            <a href="{% url 'app:food_list' %}" class="btn">View pantry</a>
+        {% endif %}
 
-<h2>What you can do</h2>
+        {% if perms.app.add_food %}
+            <a href="{% url 'app:food_new' %}" class="btn btn-secondary">Add food</a>
+        {% endif %}
 
-{% if role == 'Viewer' %}
-    <p>You are in <strong>read-only mode</strong>.</p>
-    <ul>
-        <li>You can view pantry items, recipes, and suggested recipes.</li>
-        <li>You cannot manage pantry items, food usage, recipes, or the household.</li>
-    </ul>
+        {% if perms.app.view_recipe %}
+            <a href="{% url 'app:recipe_list' %}" class="btn btn-secondary">Browse recipes</a>
+        {% endif %}
 
-{% elif role == 'Member' %}
-    <p>You can help track food usage.</p>
-    <ul>
-        <li>You can view pantry items, recipes, and suggested recipes.</li>
-        <li>You can manage food usage by marking items as consumed or wasted.</li>
-        <li>You cannot manage pantry items, recipes, or the household.</li>
-    </ul>
+        {% if perms.app.add_recipe %}
+            <a href="{% url 'app:recipe_new' %}" class="btn btn-secondary">Create recipe</a>
+        {% endif %}
 
-{% elif role == 'InventoryManager' %}
-    <p>You can manage pantry stock, but not the household.</p>
-    <ul>
-        <li>You can view pantry items, recipes, and suggested recipes.</li>
-        <li>You can manage pantry items by adding, editing, and deleting food.</li>
-        <li>You can manage food usage by marking items as consumed or wasted.</li>
-        <li>You can add ingredients.</li>
-        <li>You cannot manage household recipes or household members.</li>
-    </ul>
+        {% if perms.app.view_suggested_recipes %}
+            <a href="{% url 'app:suggested_recipes' %}" class="btn btn-secondary">Suggested recipes</a>
+        {% endif %}
 
-{% elif role == 'HouseholdAdmin' %}
-    <p>You have full household access.</p>
-    <ul>
-        <li>You can view pantry items, recipes, and suggested recipes.</li>
-        <li>You can manage pantry items by adding, editing, and deleting food.</li>
-        <li>You can manage food usage by marking items as consumed or wasted.</li>
-        <li>You can add ingredients.</li>
-        <li>You can manage household recipes by creating, editing, and deleting them.</li>
-        <li>You can manage the household by editing details, adding members, changing roles, and removing members.</li>
-    </ul>
-{% endif %}
+        {% if perms.app.change_household or perms.app.manage_household_members or not membership %}
+            <a href="{% url 'app:household_manage' %}" class="btn btn-secondary">Household</a>
+        {% endif %}
+    </div>
+</section>
 
-<hr>
+<div class="dashboard-grid" style="margin-top: 1rem;">
+    <section class="card">
+        <h2>Pantry overview</h2>
+        <div class="list-stack">
+            {% for food in foods %}
+                <div class="list-row">
+                    <div class="list-row-head">
+                        <div>
+                            <h3>{{ food.ingredient.name }}</h3>
+                            <p class="muted">{{ food.quantity }} {{ food.unit }}</p>
+                        </div>
+                        <span class="tag tag-muted">
+                            {% if food.expiry_date %}
+                                Expires {{ food.expiry_date }}
+                            {% else %}
+                                No date
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <p class="muted">No foods yet.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
 
-<h2>Quick actions</h2>
-<ul>
-    {% if perms.app.view_food %}
-        <li><a href="{% url 'app:food_list' %}">View pantry</a></li>
-    {% endif %}
+    <section class="card">
+        <h2>Expiring soon</h2>
+        <div class="list-stack">
+            {% for food in expiring_foods %}
+                <div class="list-row">
+                    <h3>{{ food.ingredient.name }}</h3>
+                    <p class="muted">{{ food.quantity }} {{ food.unit }} · expires on {{ food.expiry_date }}</p>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <p class="muted">No foods are expiring in the next 7 days.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
 
-    {% if perms.app.add_food %}
-        <li><a href="{% url 'app:food_new' %}">Add food</a></li>
-    {% endif %}
-
-    {% if perms.app.view_recipe %}
-        <li><a href="{% url 'app:recipe_list' %}">Browse recipes</a></li>
-    {% endif %}
-
-    {% if perms.app.add_recipe %}
-        <li><a href="{% url 'app:recipe_new' %}">Create recipe</a></li>
-    {% endif %}
+    <section class="card">
+        <h2>Expired foods</h2>
+        <div class="list-stack">
+            {% for food in expired_foods %}
+                <div class="list-row">
+                    <h3>{{ food.ingredient.name }}</h3>
+                    <p class="muted">{{ food.quantity }} {{ food.unit }} · expired on {{ food.expiry_date }}</p>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <p class="muted">No expired foods.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
 
     {% if perms.app.view_suggested_recipes %}
-        <li><a href="{% url 'app:suggested_recipes' %}">Suggested recipes</a></li>
+        <section class="card">
+            <h2>Suggested recipes</h2>
+            <p class="page-subtitle">Recipes that use ingredients you already have, prioritizing ones expiring soon.</p>
+
+            {% if perms.app.add_recipe %}
+                <div class="page-actions" style="margin-bottom: 1rem;">
+                    <a href="{% url 'app:recipe_new' %}" class="btn btn-secondary">Create your own recipe</a>
+                </div>
+            {% endif %}
+
+            <div class="list-stack">
+                {% for item in recipe_suggestions %}
+                    <div class="list-row">
+                        <div class="list-row-head">
+                            <div>
+                                <h3>
+                                    <a href="{% url 'app:recipe_detail' item.recipe.id %}">{{ item.recipe.name }}</a>
+                                </h3>
+                                <p class="muted">
+                                    {{ item.matched_count }}/{{ item.total_count }} ingredients available ·
+                                    missing {{ item.missing_count }} ·
+                                    uses expiring soon {{ item.expiring_match_count }}
+                                </p>
+                            </div>
+
+                            <div class="tag-row">
+                                {% if item.can_make_now %}
+                                    <span class="tag tag-success">You can make this now</span>
+                                {% elif item.almost_make_now %}
+                                    <span class="tag">Only 1 to 2 missing</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if item.expiring_ingredients %}
+                            <p class="helper-text">Expiring soon: {{ item.expiring_ingredients|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <p class="muted">No recipe suggestions yet.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
     {% endif %}
-
-    {% if perms.app.change_household or perms.app.manage_household_members or not membership %}
-        <li><a href="{% url 'app:household_manage' %}">Household</a></li>
-    {% endif %}
-</ul>
-
-<hr>
-
-<h2>Pantry overview</h2>
-<ul>
-    {% for food in foods %}
-        <li>{{ food.ingredient.name }} - {{ food.quantity }} {{ food.unit }} - expiry date: {{ food.expiry_date|default:"no date" }}</li>
-    {% empty %}
-        <li>No foods yet.</li>
-    {% endfor %}
-</ul>
-
-<h2>Expiring soon</h2>
-<ul>
-    {% for food in expiring_foods %}
-        <li>{{ food.ingredient.name }} - {{ food.quantity }} {{ food.unit }} - expires on {{ food.expiry_date }}</li>
-    {% empty %}
-        <li>No foods are expiring in the next 7 days.</li>
-    {% endfor %}
-</ul>
-
-<h2>Expired foods</h2>
-<ul>
-    {% for food in expired_foods %}
-        <li>{{ food.ingredient.name }} - {{ food.quantity }} {{ food.unit }} - expired on {{ food.expiry_date }}</li>
-    {% empty %}
-        <li>No expired foods.</li>
-    {% endfor %}
-</ul>
-
-{% if perms.app.view_suggested_recipes %}
-    <h2>Suggested recipes</h2>
-    <p>Recipes that use ingredients you already have, prioritizing ones expiring soon.</p>
-
-    {% if perms.app.add_recipe %}
-        <p><a href="{% url 'app:recipe_new' %}">Create your own recipe</a></p>
-    {% endif %}
-
-    <ul>
-        {% for item in recipe_suggestions %}
-            <li>
-                <a href="{% url 'app:recipe_detail' item.recipe.id %}">{{ item.recipe.name }}</a>
-                - {{ item.matched_count }}/{{ item.total_count }} ingredients available
-                - missing {{ item.missing_count }}
-                - uses expiring soon {{ item.expiring_match_count }}
-
-                {% if item.can_make_now %}
-                    You can make this now.
-                {% elif item.almost_make_now %}
-                    Only 1 to 2 ingredients missing.
-                {% endif %}
-
-                {% if item.expiring_ingredients %}
-                    Expiring soon: {{ item.expiring_ingredients|join:", " }}
-                {% endif %}
-            </li>
-        {% empty %}
-            <li>No recipe suggestions yet.</li>
-        {% endfor %}
-    </ul>
-{% endif %}
+</div>
 
 {% if perms.app.view_wastelog %}
-    <h3>Waste summary</h3>
-    <p>Total wasted units: {{ waste_total }}</p>
-    <ul>
-        {% for item in top_wasted_ingredients %}
-            <li>{{ item.ingredient__name }} — {{ item.total_wasted }}</li>
-        {% empty %}
-            <li>No waste registered yet.</li>
-        {% endfor %}
-    </ul>
+    <section class="card" style="margin-top: 1rem;">
+        <h2>Waste summary</h2>
+        <p class="page-subtitle">Total wasted units: {{ waste_total }}</p>
+
+        <div class="list-stack">
+            {% for item in top_wasted_ingredients %}
+                <div class="list-row">
+                    <div class="list-row-head">
+                        <strong>{{ item.ingredient__name }}</strong>
+                        <span class="tag tag-warning">{{ item.total_wasted }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <p class="muted">No waste registered yet.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
 {% endif %}
 {% endblock %}

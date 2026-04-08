@@ -1,21 +1,27 @@
 {% extends "base.html" %}
 
+{% block title %}Login | Pantry Helper{% endblock %}
+
 {% block content %}
-    <h1>Login</h1>
+<section class="auth-layout">
+    <div class="card auth-panel">
+        <span class="eyebrow">Account</span>
+        <h1>Login</h1>
+        <p class="page-subtitle">Access your household pantry, recipes, and waste tracking.</p>
 
-    <form action="." method="post">
-        {% csrf_token %}
+        <form method="post" class="form-card">
+            {% csrf_token %}
+            {{ form.as_p }}
 
-        <p>
-            {{ form.username.label_tag }}
-            {{ form.username }}
-        </p>
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
 
-        <p>
-            {{ form.password.label_tag }}
-            {{ form.password }}
-        </p>
-
-        <button type="submit">Entrar</button>
-    </form>
+            <div class="page-actions">
+                <button type="submit" class="btn">Entrar</button>
+                <a href="{% url 'app:home' %}" class="btn btn-secondary">Back</a>
+            </div>
+        </form>
+    </div>
+</section>
 {% endblock %}

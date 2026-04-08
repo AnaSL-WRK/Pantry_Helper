@@ -1,48 +1,44 @@
 {% extends "base.html" %}
 
+{% block title %}Recipes | Pantry Helper{% endblock %}
+
 {% block content %}
-<h1>Recipes</h1>
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Recipes</span>
+        <h1>Recipes</h1>
+        <p class="page-subtitle">Browse available recipes and open each one to compare against your pantry.</p>
+    </div>
 
-{% if perms.app.view_suggested_recipes %}
-    <p><a href="{% url 'app:suggested_recipes' %}">View suggested recipes</a></p>
-{% endif %}
+    {% if perms.app.view_suggested_recipes %}
+        <a href="{% url 'app:suggested_recipes' %}" class="btn">View suggested recipes</a>
+    {% endif %}
+</div>
 
-{% if can_add_recipe %}
-    <p><a href="{% url 'app:recipe_new' %}">Create recipe</a></p>
-{% endif %}
+{% if recipes %}
+    <div class="card-grid card-grid-2">
+        {% for recipe in recipes %}
+            <article class="card">
+                <div class="tag-row">
+                    {% if recipe.author %}
+                        <span class="tag tag-muted">{{ recipe.author }}</span>
+                    {% else %}
+                        <span class="tag tag-muted">Recipe</span>
+                    {% endif %}
+                </div>
 
-{% if household_recipes %}
-    <h2>Your household recipes</h2>
-    <ul>
-        {% for recipe in household_recipes %}
-            <li>
-                <a href="{% url 'app:recipe_detail' recipe.id %}">{{ recipe.name }}</a>
-                {% if recipe.author %} — {{ recipe.author }}{% endif %}
+                <h3 style="margin-top: 0.9rem;">{{ recipe.name }}</h3>
 
-                {% if perms.app.change_recipe %}
-                    | <a href="{% url 'app:recipe_edit' recipe.id %}">Edit</a>
-                {% endif %}
-
-                {% if perms.app.delete_recipe %}
-                    | <a href="{% url 'app:recipe_delete' recipe.id %}">Delete</a>
-                {% endif %}
-            </li>
+                <div class="page-actions" style="margin-top: 1rem;">
+                    <a href="{% url 'app:recipe_detail' recipe.id %}" class="btn btn-secondary">Open recipe</a>
+                </div>
+            </article>
         {% endfor %}
-    </ul>
-{% endif %}
-
-<h2>Preloaded recipes</h2>
-
-{% if preloaded_recipes %}
-    <ul>
-        {% for recipe in preloaded_recipes %}
-            <li>
-                <a href="{% url 'app:recipe_detail' recipe.id %}">{{ recipe.name }}</a>
-                {% if recipe.author %} — {{ recipe.author }}{% endif %}
-            </li>
-        {% endfor %}
-    </ul>
+    </div>
 {% else %}
-    <p>No recipes available.</p>
+    <section class="card empty-state">
+        <h2>No recipes available.</h2>
+        <p class="page-subtitle">Load or create recipes first.</p>
+    </section>
 {% endif %}
 {% endblock %}
