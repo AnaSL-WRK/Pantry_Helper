@@ -1,19 +1,18 @@
 {% extends "base.html" %}
 
+{% block title %}Delete food | Pantry Helper{% endblock %}
+
 {% block content %}
-  <h1>Delete food</h1>
+<section class="card warning-card">
+    <span class="eyebrow">Danger zone</span>
+    <h1>Delete food</h1>
+    <p>Are you sure you want to delete <strong>{{ food.ingredient.name }}</strong>?</p>
+    <p class="page-subtitle">Current quantity: {{ food.quantity }} {{ food.unit }}</p>
 
-  <p>
-    Are you sure you want to delete
-    <strong>{{ food.ingredient.name }}</strong>?
-  </p>
-
-  <p>Current quantity: {{ food.quantity }} {{ food.unit }}</p>
-
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit">Yes, delete</button>
-  </form>
-
-  <p><a href="{% url 'app:food_list' %}">Cancel</a></p>
+    <form method="post" class="page-actions">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, delete</button>
+        <a href="{% url 'app:food_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</section>
 {% endblock %}

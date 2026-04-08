@@ -1,46 +1,65 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Pantry Helper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pantry Helper{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-    <nav>
-        {% if user.is_authenticated %}
-            <a href="{% url 'app:dashboard' %}">Dashboard</a>
+    <header class="site-shell">
+        <div class="container">
+            <nav class="navbar">
+                <a class="brand" href="{% if user.is_authenticated %}{% url 'app:dashboard' %}{% endif %}">
+                    Pantry Helper
+                </a>
 
-            {% if perms.app.view_food %}
-                <a href="{% url 'app:food_list' %}">Pantry</a>
-            {% endif %}
+                <div class="nav-links">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'app:dashboard' %}">Dashboard</a>
 
-            {% if perms.app.add_food %}
-                <a href="{% url 'app:food_new' %}">Add food</a>
-            {% endif %}
+                        {% if perms.app.view_food %}
+                            <a href="{% url 'app:food_list' %}">Pantry</a>
+                        {% endif %}
 
-            {% if perms.app.view_recipe %}
-                <a href="{% url 'app:recipe_list' %}">Recipes</a>
-            {% endif %}
+                        {% if perms.app.add_food %}
+                            <a href="{% url 'app:food_new' %}">Add food</a>
+                        {% endif %}
 
-            {% if perms.app.change_household or perms.app.manage_household_members or not user.household_member %}
-                <a href="{% url 'app:household_manage' %}">Household</a>
-            {% endif %}
+                        {% if perms.app.view_recipe %}
+                            <a href="{% url 'app:recipe_list' %}">Recipes</a>
+                        {% endif %}
+
+                        {% if perms.app.view_suggested_recipes %}
+                            <a href="{% url 'app:suggested_recipes' %}">Suggested</a>
+                        {% endif %}
+
+                        <a href="{% url 'app:household_manage' %}">Household</a>
+                   
+                    {% endif %}
+                </div>
+
+                <div class="nav-user">
+                    {% include "loginpartial.html" %}
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message message-{{ message.tags|default:'info' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
-        {% include "loginpartial.html" %}
-    </nav>
-
-    <hr>
-
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-        <hr>
-    {% endif %}
-
-    {% block content %}
-    {% endblock %}
+        {% block content %}
+        {% endblock %}
+    </main>
 </body>
 </html>

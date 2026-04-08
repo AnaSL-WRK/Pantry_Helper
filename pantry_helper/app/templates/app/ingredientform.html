@@ -1,16 +1,27 @@
 {% extends "base.html" %}
 
+{% block title %}{{ page_title }} | Pantry Helper{% endblock %}
+
 {% block content %}
-  <h1>{{ page_title }}</h1>
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Ingredient</span>
+        <h1>{{ page_title }}</h1>
+        <p class="page-subtitle">Create a new ingredient so it can be used in pantry items and recipes.</p>
+    </div>
+</div>
 
-  <form method="post">
+<form method="post" class="card form-card">
     {% csrf_token %}
-    <input type="hidden" name="next" value="{{ next_url }}">
     {{ form.as_p }}
-    <button type="submit">Save food</button>
-  </form>
 
-  <p>
-    <a href="{{ next_url }}">Back</a>
-  </p>
+    {% if next_url %}
+        <input type="hidden" name="next" value="{{ next_url }}">
+    {% endif %}
+
+    <div class="page-actions">
+        <button type="submit" class="btn">Save ingredient</button>
+        <a href="{{ next_url|default:'#' }}" class="btn btn-secondary">Back</a>
+    </div>
+</form>
 {% endblock %}

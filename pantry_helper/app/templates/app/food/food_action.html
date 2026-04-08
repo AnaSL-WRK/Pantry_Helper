@@ -1,18 +1,28 @@
 {% extends "base.html" %}
 
+{% block title %}{{ page_title }} | Pantry Helper{% endblock %}
+
 {% block content %}
-  <h1>{{ page_title }}</h1>
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Pantry action</span>
+        <h1>{{ page_title }}</h1>
+        <p class="page-subtitle">Update the quantity for this pantry item.</p>
+    </div>
+</div>
 
-  <p>
-    <strong>{{ food.ingredient.name }}</strong><br>
-    Current quantity: {{ food.quantity }} {{ food.unit }}
-  </p>
+<div class="card">
+    <h2>{{ food.ingredient.name }}</h2>
+    <p class="page-subtitle">Current quantity: {{ food.quantity }} {{ food.unit }}</p>
+</div>
 
-  <form method="post">
+<form method="post" class="card form-card">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">{{ submit_label }}</button>
-  </form>
 
-  <p><a href="{% url 'app:food_list' %}">Back to pantry</a></p>
+    <div class="page-actions">
+        <button type="submit" class="btn">{{ submit_label }}</button>
+        <a href="{% url 'app:food_list' %}" class="btn btn-secondary">Back to pantry</a>
+    </div>
+</form>
 {% endblock %}

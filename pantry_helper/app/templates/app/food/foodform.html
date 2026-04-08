@@ -1,20 +1,33 @@
 {% extends "base.html" %}
 
+{% block title %}{{ page_title }} | Pantry Helper{% endblock %}
+
 {% block content %}
-  <h1>{{ page_title }}</h1>
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Pantry item</span>
+        <h1>{{ page_title }}</h1>
+        <p class="page-subtitle">Fill in the item details below.</p>
+    </div>
+</div>
 
-  {% if add_ingredient_url %}
-    <p>
-      Can't find the food in the list?
-      <a href="{{ add_ingredient_url }}">Create a new ingredient</a>
-    </p>
-  {% endif %}
+{% if add_ingredient_url %}
+    <div class="card">
+        <h2>Missing ingredient?</h2>
+        <p class="helper-text">Can't find the food in the list? Create a new ingredient first.</p>
+        <div class="page-actions">
+            <a href="{{ add_ingredient_url }}" class="btn btn-secondary">Create a new ingredient</a>
+        </div>
+    </div>
+{% endif %}
 
-  <form method="post">
+<form method="post" class="card form-card">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">{{ submit_label }}</button>
-  </form>
 
-  <p><a href="{% url 'app:food_list' %}">Back to pantry</a></p>
+    <div class="page-actions">
+        <button type="submit" class="btn">{{ submit_label }}</button>
+        <a href="{% url 'app:food_list' %}" class="btn btn-secondary">Back to pantry</a>
+    </div>
+</form>
 {% endblock %}

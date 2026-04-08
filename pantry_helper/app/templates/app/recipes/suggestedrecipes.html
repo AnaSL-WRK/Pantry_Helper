@@ -1,39 +1,61 @@
 {% extends "base.html" %}
 
+{% block title %}Suggested recipes | Pantry Helper{% endblock %}
+
 {% block content %}
-  <h1>Suggested recipes</h1>
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Suggestions</span>
+        <h1>Suggested recipes</h1>
+        <p class="page-subtitle">Recipes are sorted to prioritize ingredients that are expiring soon.</p>
+    </div>
 
-  <p>Recipes are sorted to prioritize ingredients that are expiring soon.</p>
+    <a href="{% url 'app:recipe_list' %}" class="btn btn-secondary">Back to all recipes</a>
+</div>
 
-  {% if suggestions %}
-    <ul>
-      {% for item in suggestions %}
-        <li>
-          <a href="{% url 'app:recipe_detail' item.recipe.id %}">{{ item.recipe.name }}</a>
-          — {{ item.matched_count }}/{{ item.total_count }} ingredients available
-          — missing {{ item.missing_count }}
-          — uses expiring soon {{ item.expiring_match_count }}
+{% if suggestions %}
+    <div class="card-grid card-grid-2">
+        {% for item in suggestions %}
+            <article class="card">
+                <div class="list-row-head">
+                    <div>
+                        <h3>
+                            <a href="{% url 'app:recipe_detail' item.recipe.id %}">{{ item.recipe.name }}</a>
+                        </h3>
+                        <p class="muted">
+                            {{ item.matched_count }}/{{ item.total_count }} ingredients available ·
+                            missing {{ item.missing_count }} ·
+                            uses expiring soon {{ item.expiring_match_count }}
+                        </p>
+                    </div>
 
-          {% if item.can_make_now %}
-            <br><strong>You can make this now.</strong>
-          {% elif item.almost_make_now %}
-            <br><strong>Only 1–2 ingredients missing.</strong>
-          {% endif %}
+                    <div class="tag-row">
+                        {% if item.can_make_now %}
+                            <span class="tag tag-success">You can make this now</span>
+                        {% elif item.almost_make_now %}
+                            <span class="tag">Only 1–2 missing</span>
+                        {% endif %}
+                    </div>
+                </div>
 
-          {% if item.expiring_ingredients %}
-            <br>
-            <small>Expiring soon: {{ item.expiring_ingredients|join:", " }}</small>
-          {% endif %}
+                {% if item.expiring_ingredients %}
+                    <p class="helper-text">Expiring soon: {{ item.expiring_ingredients|join:", " }}</p>
+                {% endif %}
 
-          {% if item.missing_ingredients %}
-            <br>
-            <small>Missing: {{ item.missing_ingredients|join:", " }}</small>
-          {% endif %}
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>No suggested recipes found yet.</p>
-    <p>Add more foods to the pantry first.</p>
-  {% endif %}
+                {% if item.missing_ingredients %}
+                    <p class="helper-text">Missing: {{ item.missing_ingredients|join:", " }}</p>
+                {% endif %}
+
+                <div class="page-actions" style="margin-top: 1rem;">
+                    <a href="{% url 'app:recipe_detail' item.recipe.id %}" class="btn btn-secondary">View recipe</a>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <section class="card empty-state">
+        <h2>No suggested recipes found yet.</h2>
+        <p class="page-subtitle">Add more foods to the pantry first.</p>
+    </section>
+{% endif %}
 {% endblock %}
