@@ -1,35 +1,306 @@
 {% extends "base.html" %}
 
-{% block content %}
-<h1>{{ page_title }}</h1>
+{% block title %}{{ page_title }} | Pantry Helper{% endblock %}
 
-<form method="post">
+{% block content %}
+<div class="page-header">
+    <div>
+        <span class="eyebrow">Recipes</span>
+        <h1>{{ page_title }}</h1>
+        <p class="page-subtitle">
+            Add the recipe details, ingredients, and preparation steps.
+        </p>
+    </div>
+</div>
+
+<form method="post" class="recipe-form">
     {% csrf_token %}
 
-    {{ form.as_p }}
+    {% if form.non_field_errors %}
+        <div class="message message-error">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
 
-    <h2>Ingredients</h2>
-    {{ ingredient_formset.management_form }}
+    <section class="card recipe-section">
+        <h2>Recipe details</h2>
 
-    {% for ingredient_form in ingredient_formset %}
-        <fieldset>
-            {{ ingredient_form.id }}
-            {{ ingredient_form.as_p }}
-        </fieldset>
-    {% endfor %}
+        <div class="form-grid form-grid-2">
+            <div class="form-field">
+                <label for="{{ form.name.id_for_label }}">Name</label>
+                {{ form.name }}
+                {{ form.name.errors }}
+            </div>
 
-    <h2>Steps</h2>
-    {{ step_formset.management_form }}
+            <div class="form-field">
+                <label for="{{ form.author.id_for_label }}">Author</label>
+                {{ form.author }}
+                {{ form.author.errors }}
+            </div>
 
-    {% for step_form in step_formset %}
-        <fieldset>
-            {{ step_form.id }}
-            {{ step_form.as_p }}
-        </fieldset>
-    {% endfor %}
+            <div class="form-field">
+                <label for="{{ form.source_site.id_for_label }}">Source site</label>
+                {{ form.source_site }}
+                {{ form.source_site.errors }}
+            </div>
 
-    <button type="submit">{{ submit_label }}</button>
+            <div class="form-field">
+                <label for="{{ form.source_url.id_for_label }}">Source URL</label>
+                {{ form.source_url }}
+                {{ form.source_url.errors }}
+            </div>
+        </div>
+    </section>
+
+    <section class="card recipe-section">
+        <div class="section-head">
+            <div>
+                <h2>Ingredients</h2>
+                <p class="page-subtitle">Start with one ingredient and add more if needed.</p>
+            </div>
+            <button type="button" class="btn btn-secondary" id="add-ingredient-btn">
+                Add ingredient
+            </button>
+        </div>
+
+        {{ ingredient_formset.management_form }}
+
+        {% if ingredient_formset.non_form_errors %}
+            <div class="message message-error">
+                {{ ingredient_formset.non_form_errors }}
+            </div>
+        {% endif %}
+
+        <div id="ingredient-forms" class="formset-stack">
+            {% for ingredient_form in ingredient_formset %}
+                <div class="formset-row" data-formset-row>
+                    {{ ingredient_form.id }}
+
+
+                    <div class="form-grid form-grid-4">
+                        <div class="form-field">
+                            <label for="{{ ingredient_form.ingredient.id_for_label }}">Ingredient</label>
+                            {{ ingredient_form.ingredient }}
+                            {{ ingredient_form.ingredient.errors }}
+                        </div>
+
+                        <div class="form-field">
+                            <label for="{{ ingredient_form.quantity.id_for_label }}">Quantity</label>
+                            {{ ingredient_form.quantity }}
+                            {{ ingredient_form.quantity.errors }}
+                        </div>
+
+                        <div class="form-field">
+                            <label for="{{ ingredient_form.unit.id_for_label }}">Unit</label>
+                            {{ ingredient_form.unit }}
+                            {{ ingredient_form.unit.errors }}
+                        </div>
+
+                        <div class="form-field">
+                            <label for="{{ ingredient_form.line_text.id_for_label }}">Original line</label>
+                            {{ ingredient_form.line_text }}
+                            {{ ingredient_form.line_text.errors }}
+                        </div>
+                    </div>
+
+                    <div class="formset-row-actions">
+                        <button type="button" class="btn btn-ghost remove-form-btn">Remove</button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="card recipe-section">
+        <div class="section-head">
+            <div>
+                <h2>Steps</h2>
+                <p class="page-subtitle">Start with one step and add more as you write the recipe.</p>
+            </div>
+            <button type="button" class="btn btn-secondary" id="add-step-btn">
+                Add step
+            </button>
+        </div>
+
+        {{ step_formset.management_form }}
+
+        {% if step_formset.non_form_errors %}
+            <div class="message message-error">
+                {{ step_formset.non_form_errors }}
+            </div>
+        {% endif %}
+
+        <div id="step-forms" class="formset-stack">
+            {% for step_form in step_formset %}
+                <div class="formset-row" data-formset-row>
+                    {{ step_form.id }}
+        
+
+                    <div class="form-field">
+                        <label for="{{ step_form.step_text.id_for_label }}">Step</label>
+                        {{ step_form.step_text }}
+                        {{ step_form.step_text.errors }}
+                    </div>
+
+                    <div class="formset-row-actions">
+                        <button type="button" class="btn btn-ghost remove-form-btn">Remove</button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="page-actions">
+        <button type="submit" class="btn">{{ submit_label }}</button>
+        <a href="{% url 'app:recipe_list' %}" class="btn btn-secondary">Back to recipes</a>
+    </div>
 </form>
 
-<p><a href="{% url 'app:recipe_list' %}">Back to recipes</a></p>
+<template id="ingredient-empty-form-template">
+    <div class="formset-row" data-formset-row>
+        {{ ingredient_formset.empty_form.id }}
+        {% if ingredient_formset.empty_form.DELETE %}
+            <div class="delete-field-hidden">{{ ingredient_formset.empty_form.DELETE }}</div>
+        {% endif %}
+
+        <div class="form-grid form-grid-4">
+            <div class="form-field">
+                <label for="{{ ingredient_formset.empty_form.ingredient.id_for_label }}">Ingredient</label>
+                {{ ingredient_formset.empty_form.ingredient }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ ingredient_formset.empty_form.quantity.id_for_label }}">Quantity</label>
+                {{ ingredient_formset.empty_form.quantity }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ ingredient_formset.empty_form.unit.id_for_label }}">Unit</label>
+                {{ ingredient_formset.empty_form.unit }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ ingredient_formset.empty_form.line_text.id_for_label }}">Original line</label>
+                {{ ingredient_formset.empty_form.line_text }}
+            </div>
+        </div>
+
+        <div class="formset-row-actions">
+            <button type="button" class="btn btn-ghost remove-form-btn">Remove</button>
+        </div>
+    </div>
+</template>
+
+<template id="step-empty-form-template">
+    <div class="formset-row" data-formset-row>
+        {{ step_formset.empty_form.id }}
+        {% if step_formset.empty_form.DELETE %}
+            <div class="delete-field-hidden">{{ step_formset.empty_form.DELETE }}</div>
+        {% endif %}
+
+        <div class="form-field">
+            <label for="{{ step_formset.empty_form.step_text.id_for_label }}">Step</label>
+            {{ step_formset.empty_form.step_text }}
+        </div>
+
+        <div class="formset-row-actions">
+            <button type="button" class="btn btn-ghost remove-form-btn">Remove</button>
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function setupDynamicFormset(options) {
+        const container = document.getElementById(options.containerId);
+        const addButton = document.getElementById(options.addButtonId);
+        const template = document.getElementById(options.templateId);
+
+        if (!container || !addButton || !template) return;
+
+        const section = container.closest('section');
+        const totalFormsInput = section.querySelector('input[name$="-TOTAL_FORMS"]');
+
+        function visibleRowsCount() {
+            return Array.from(container.querySelectorAll('[data-formset-row]'))
+                .filter(row => row.style.display !== 'none').length;
+        }
+
+        function clearFields(row, keepDeleteInput) {
+            row.querySelectorAll('input, select, textarea').forEach(field => {
+                if (keepDeleteInput && field === keepDeleteInput) return;
+                if (field.type === 'hidden') return;
+
+                if (field.tagName === 'SELECT') {
+                    field.selectedIndex = 0;
+                } else if (field.type === 'checkbox' || field.type === 'radio') {
+                    field.checked = false;
+                } else {
+                    field.value = '';
+                }
+            });
+        }
+
+        function attachRemoveHandler(row) {
+            const removeBtn = row.querySelector('.remove-form-btn');
+            if (!removeBtn) return;
+
+            removeBtn.addEventListener('click', function () {
+                const deleteInput = row.querySelector('input[name$="-DELETE"]');
+                const isOnlyVisibleRow = visibleRowsCount() <= 1;
+
+                if (isOnlyVisibleRow) {
+                    clearFields(row, deleteInput);
+                    if (deleteInput) deleteInput.checked = false;
+                    return;
+                }
+
+                if (deleteInput) {
+                    deleteInput.checked = true;
+                    clearFields(row, deleteInput);
+                    row.style.display = 'none';
+                } else {
+                    row.remove();
+                }
+            });
+        }
+
+        function attachHandlersToExistingRows() {
+            container.querySelectorAll('[data-formset-row]').forEach(row => {
+                const deleteInput = row.querySelector('input[name$="-DELETE"]');
+                if (deleteInput && deleteInput.checked) {
+                    row.style.display = 'none';
+                }
+                attachRemoveHandler(row);
+            });
+        }
+
+        function addForm() {
+            const formIndex = Number(totalFormsInput.value);
+            const html = template.innerHTML.replace(/__prefix__/g, formIndex);
+
+            container.insertAdjacentHTML('beforeend', html);
+            totalFormsInput.value = formIndex + 1;
+
+            const newRow = container.lastElementChild;
+            attachRemoveHandler(newRow);
+        }
+
+        addButton.addEventListener('click', addForm);
+        attachHandlersToExistingRows();
+    }
+
+    setupDynamicFormset({
+        containerId: 'ingredient-forms',
+        addButtonId: 'add-ingredient-btn',
+        templateId: 'ingredient-empty-form-template'
+    });
+
+    setupDynamicFormset({
+        containerId: 'step-forms',
+        addButtonId: 'add-step-btn',
+        templateId: 'step-empty-form-template'
+    });
+});
+</script>
 {% endblock %}

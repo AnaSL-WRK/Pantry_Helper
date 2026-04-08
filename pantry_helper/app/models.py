@@ -30,11 +30,13 @@ class HouseholdMember(models.Model):
         on_delete=models.CASCADE,
         related_name='household_member'
     )
+
     household = models.ForeignKey(
         Household,
         on_delete=models.CASCADE,
         related_name='household_members'
     )
+
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -45,6 +47,7 @@ class HouseholdMember(models.Model):
 
     def __str__(self):
         return f'{self.user.username} -> {self.household.name}'
+
 
 #food category (food group) - dairy, meat, vegetables, etc
 class Category(models.Model):
@@ -75,6 +78,22 @@ class Ingredient(models.Model):
     def __str__(self):
         return self.name
 
+#units of measurement for food
+class Unit(models.TextChoices):
+    UNITS = 'units', 'Units'
+    GRAMS = 'grams', 'Grams'
+    KILOGRAMS = 'kilograms', 'Kilograms'
+    MILLILITERS = 'milliliters', 'Milliliters'
+    LITERS = 'liters', 'Liters'
+    TEASPOONS = 'teaspoons', 'Teaspoons'
+    TABLESPOONS = 'tablespoons', 'Tablespoons'
+    CUPS = 'cups', 'Cups'
+    SLICES = 'slices', 'Slices'
+    PACKS = 'packs', 'Packs'
+    CANS = 'cans', 'Cans'
+    BOTTLES = 'bottles', 'Bottles'
+    PIECES = 'pieces', 'Pieces'
+
 
 #food in pantry
 class Food(models.Model):
@@ -98,8 +117,18 @@ class Food(models.Model):
     )
 
     quantity = models.IntegerField(default=0)
-    unit = models.CharField(max_length=20, default='units')
-    location = models.CharField(max_length=20, choices=LOCATION_CHOICES, default='PANTRY')
+
+    unit = models.CharField(
+        max_length=20,
+        choices=Unit.choices,
+        default=Unit.UNITS,
+    )    
+    
+    location = models.CharField(
+        max_length=20, 
+        choices=LOCATION_CHOICES, 
+        default='PANTRY')
+    
     expiry_date = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True)
 
@@ -185,7 +214,11 @@ class RecipeIngredient(models.Model):
         blank=True
     )
 
-    unit = models.CharField(max_length=20, blank=True)
+    unit = models.CharField(
+        max_length=20,
+        choices=Unit.choices,
+        blank=True,
+    )
 
     line_text = models.TextField(blank=True)
     position = models.PositiveSmallIntegerField(default=1)
@@ -244,6 +277,13 @@ class WasteLog(models.Model):
     )
 
     quantity = models.PositiveIntegerField(default=1)
+    
+    unit = models.CharField(
+        max_length=20,
+        choices=Unit.choices,
+        default=Unit.UNITS,
+    )
+
     reason = models.CharField(
         max_length=20,
         choices=WasteReason.choices,
@@ -264,4 +304,4 @@ class WasteLog(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'{self.ingredient.name} - {self.quantity} ({self.reason})'
+        return f'{self.ingredient.name} - {self.quantity} {self.unit} ({self.reason})'

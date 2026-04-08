@@ -537,3 +537,120 @@ form {
     padding: 0 1.2rem 1.2rem;
     border-top: 1px solid var(--border);
 }
+
+.recipe-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.recipe-section {
+    display: grid;
+    gap: 1rem;
+}
+
+.section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.section-head h2 {
+    margin-bottom: 0.2rem;
+}
+
+.form-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.form-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.form-field {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.form-field label {
+    display: block;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.recipe-form input,
+.recipe-form select,
+.recipe-form textarea {
+    width: 100%;
+    border: 1px solid #d8dee6;
+    border-radius: 12px;
+    padding: 0.8rem 0.9rem;
+    font: inherit;
+    color: var(--text);
+    background: white;
+}
+
+.recipe-form textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.recipe-form input:focus,
+.recipe-form select:focus,
+.recipe-form textarea:focus {
+    outline: none;
+    border-color: #f7c896;
+    box-shadow: 0 0 0 4px rgba(242, 140, 40, 0.12);
+}
+
+.recipe-form .errorlist {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: #b91c1c;
+    font-size: 0.92rem;
+}
+
+.formset-stack {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.formset-row {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem;
+    background: #fffdfa;
+}
+
+.formset-row-actions {
+    margin-top: 0.85rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--accent-dark);
+    border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+    background: var(--accent-soft);
+}
+
+.delete-field-hidden {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .form-grid-4,
+    .form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}

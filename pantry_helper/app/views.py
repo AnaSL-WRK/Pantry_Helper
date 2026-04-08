@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Case, When, Value, IntegerField
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -144,6 +144,15 @@ def _build_household_manage_context(request, membership, household_form=None, me
     }
 
 
+def _ordered_foods_queryset(queryset):
+    return queryset.annotate(
+        expiry_sort_bucket=Case(
+            When(expiry_date__isnull=True, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        )
+    ).order_by('expiry_sort_bucket', 'expiry_date', 'ingredient__name')
+
 def home(request):
     return render(request, 'app/home.html')
 
@@ -156,21 +165,18 @@ def dashboard(request):
     expiring_foods = []
     expired_foods = []
     recipe_suggestions = []
-    waste_total = 0
     top_wasted_ingredients = []
 
     if membership:
         today = timezone.localdate()
         expiring_limit = today + timedelta(days=7)
 
-        foods = (
+        foods = _ordered_foods_queryset(
             Food.objects.filter(
                 household=membership.household,
                 quantity__gte=1,
-            )
-            .select_related('ingredient')
-            .order_by('expiry_date', 'ingredient__name')[:5]
-        )
+            ).select_related('ingredient')
+        )[:5]
 
         expiring_foods = (
             Food.objects.filter(
@@ -201,16 +207,12 @@ def dashboard(request):
         )
 
         if request.user.has_perm('app.view_wastelog'):
-            waste_total = (
-                WasteLog.objects.filter(household=membership.household)
-                .aggregate(total=Sum('quantity'))['total'] or 0
-            )
 
             top_wasted_ingredients = (
                 WasteLog.objects.filter(household=membership.household)
-                .values('ingredient__name')
+                .values('ingredient__name', 'unit')
                 .annotate(total_wasted=Sum('quantity'))
-                .order_by('-total_wasted', 'ingredient__name')[:5]
+                .order_by('-total_wasted', 'ingredient__name', 'unit')[:5]
             )
 
     tparams = {
@@ -220,7 +222,6 @@ def dashboard(request):
         'expiring_foods': expiring_foods,
         'expired_foods': expired_foods,
         'recipe_suggestions': recipe_suggestions,
-        'waste_total': waste_total,
         'top_wasted_ingredients': top_wasted_ingredients,
     }
 
@@ -236,13 +237,11 @@ def food_list(request):
 
     role = get_user_role(request.user)
 
-    foods = (
+    foods = _ordered_foods_queryset(
         Food.objects.filter(
             household=membership.household,
             quantity__gte=1,
-        )
-        .select_related('ingredient')
-        .order_by('expiry_date', 'ingredient__name')
+        ).select_related('ingredient')
     )
 
     tparams = {
@@ -384,28 +383,24 @@ def recipe_list(request):
     membership = get_membership(request.user)
     role = get_user_role(request.user)
 
-    preloaded_recipes = Recipe.objects.filter(
-        is_preloaded=True,
-        household__isnull=True,
-    ).order_by('name')
+    recipe_filter = Q(is_preloaded=True, household__isnull=True)
 
-    household_recipes = Recipe.objects.none()
     if membership is not None:
-        household_recipes = Recipe.objects.filter(
+        recipe_filter |= Q(
             household=membership.household,
             is_preloaded=False,
-        ).order_by('name')
+        )
+
+    recipes = Recipe.objects.filter(recipe_filter).order_by('name')
 
     tparams = {
-        'preloaded_recipes': preloaded_recipes,
-        'household_recipes': household_recipes,
+        'recipes': recipes,
         'membership': membership,
         'role': role,
         'can_add_recipe': request.user.has_perm('app.add_recipe') and membership is not None,
     }
 
     return render(request, 'app/recipes/recipelist.html', tparams)
-
 
 @login_required
 @permission_required('app.view_recipe', raise_exception=True)
@@ -723,6 +718,7 @@ def food_waste(request, pk):
                 food=food,
                 ingredient=food.ingredient,
                 quantity=quantity,
+                unit=food.unit,
                 reason=reason,
                 user=request.user,
             )

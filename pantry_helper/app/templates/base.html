@@ -23,16 +23,8 @@
                             <a href="{% url 'app:food_list' %}">Pantry</a>
                         {% endif %}
 
-                        {% if perms.app.add_food %}
-                            <a href="{% url 'app:food_new' %}">Add food</a>
-                        {% endif %}
-
                         {% if perms.app.view_recipe %}
                             <a href="{% url 'app:recipe_list' %}">Recipes</a>
-                        {% endif %}
-
-                        {% if perms.app.view_suggested_recipes %}
-                            <a href="{% url 'app:suggested_recipes' %}">Suggested</a>
                         {% endif %}
 
                         <a href="{% url 'app:household_manage' %}">Household</a>
