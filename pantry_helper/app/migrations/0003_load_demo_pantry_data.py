@@ -41,27 +41,34 @@ def load_demo_pantry_data(apps, schema_editor):
     )
 
     sample_foods = [
-        {'category': 'Dairy', 'ingredient': 'milk', 'quantity': 1, 'unit': 'l', 'location': 'FRIDGE', 'expiry_date': today - timedelta(days=2)},
-        {'category': 'Dairy', 'ingredient': 'butter', 'quantity': 250, 'unit': 'g', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=365)},
-        {'category': 'Meat', 'ingredient': 'streaky bacon', 'quantity': 200, 'unit': 'g', 'location': 'FRIDGE', 'expiry_date': today},
-        {'category': 'Meat', 'ingredient': 'pork fillet', 'quantity': 400, 'unit': 'g', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=7)},
-        {'category': 'Fish', 'ingredient': 'smoked salmon', 'quantity': 150, 'unit': 'g', 'location': 'FRIDGE', 'expiry_date': today - timedelta(days=1)},
-        {'category': 'Fish', 'ingredient': 'salmon fillet', 'quantity': 300, 'unit': 'g', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=7)},
-        {'category': 'Fruit', 'ingredient': 'apples', 'quantity': 6, 'unit': 'units', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=7)},
-        {'category': 'Fruit', 'ingredient': 'orange', 'quantity': 4, 'unit': 'units', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=365)},
-        {'category': 'Vegetables', 'ingredient': 'carrots', 'quantity': 1, 'unit': 'kg', 'location': 'FRIDGE', 'expiry_date': today},
-        {'category': 'Vegetables', 'ingredient': 'red onion', 'quantity': 3, 'unit': 'units', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
-        {'category': 'Bakery', 'ingredient': 'breadcrumbs', 'quantity': 250, 'unit': 'g', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
-        {'category': 'Bakery', 'ingredient': 'puff pastry', 'quantity': 1, 'unit': 'pack', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=7)},
-        {'category': 'Drinks', 'ingredient': 'apple juice', 'quantity': 1, 'unit': 'l', 'location': 'FRIDGE', 'expiry_date': today},
-        {'category': 'Drinks', 'ingredient': 'white wine', 'quantity': 750, 'unit': 'ml', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
-        {'category': 'Snacks', 'ingredient': 'flaked almonds', 'quantity': 150, 'unit': 'g', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
-        {'category': 'Snacks', 'ingredient': 'walnuts', 'quantity': 200, 'unit': 'g', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
-        {'category': 'Frozen', 'ingredient': 'frozen sweetcorn', 'quantity': 500, 'unit': 'g', 'location': 'FREEZER', 'expiry_date': today + timedelta(days=365)},
-        {'category': 'Pantry', 'ingredient': 'plain flour', 'quantity': 1, 'unit': 'kg', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
-        {'category': 'Pantry', 'ingredient': 'olive oil', 'quantity': 750, 'unit': 'ml', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
-    ]
+    {'category': 'Dairy', 'ingredient': 'milk', 'quantity': 1, 'unit': 'liters', 'location': 'FRIDGE', 'expiry_date': today - timedelta(days=2)},
+    {'category': 'Dairy', 'ingredient': 'butter', 'quantity': 250, 'unit': 'grams', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=365)},
+    {'category': 'Meat', 'ingredient': 'streaky bacon', 'quantity': 200, 'unit': 'grams', 'location': 'FRIDGE', 'expiry_date': today},
+    {'category': 'Meat', 'ingredient': 'pork fillet', 'quantity': 400, 'unit': 'grams', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=7)},
+    {'category': 'Fish', 'ingredient': 'smoked salmon', 'quantity': 150, 'unit': 'grams', 'location': 'FRIDGE', 'expiry_date': today - timedelta(days=1)},
+    {'category': 'Fish', 'ingredient': 'salmon fillet', 'quantity': 300, 'unit': 'grams', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=7)},
+    {'category': 'Fruit', 'ingredient': 'apples', 'quantity': 6, 'unit': 'units', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=7)},
+    {'category': 'Fruit', 'ingredient': 'oranges', 'quantity': 4, 'unit': 'units', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=365)},
+    {'category': 'Vegetables', 'ingredient': 'carrots', 'quantity': 1, 'unit': 'kilograms', 'location': 'FRIDGE', 'expiry_date': today},
+    {'category': 'Vegetables', 'ingredient': 'red onions', 'quantity': 3, 'unit': 'units', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
+    {'category': 'Bakery', 'ingredient': 'breadcrumbs', 'quantity': 250, 'unit': 'grams', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
+    {'category': 'Bakery', 'ingredient': 'puff pastry', 'quantity': 1, 'unit': 'packs', 'location': 'FRIDGE', 'expiry_date': today + timedelta(days=7)},
+    {'category': 'Drinks', 'ingredient': 'apple juice', 'quantity': 1, 'unit': 'liters', 'location': 'FRIDGE', 'expiry_date': today},
+    {'category': 'Drinks', 'ingredient': 'white wine', 'quantity': 750, 'unit': 'milliliters', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
+    {'category': 'Snacks', 'ingredient': 'flaked almonds', 'quantity': 150, 'unit': 'grams', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
+    {'category': 'Snacks', 'ingredient': 'walnuts', 'quantity': 200, 'unit': 'grams', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
+    {'category': 'Frozen', 'ingredient': 'frozen sweetcorn', 'quantity': 500, 'unit': 'grams', 'location': 'FREEZER', 'expiry_date': today + timedelta(days=365)},
+    {'category': 'Pantry', 'ingredient': 'plain flour', 'quantity': 1, 'unit': 'kilograms', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
+    {'category': 'Pantry', 'ingredient': 'olive oil', 'quantity': 750, 'unit': 'milliliters', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
+    {'category': 'Fruit', 'ingredient': 'clementines', 'quantity': 5, 'unit': 'units', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=2)},
+    {'category': 'Fruit', 'ingredient': 'pomegranate seeds', 'quantity': 500, 'unit': 'grams', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=8)},
+    {'category': 'Pantry', 'ingredient': 'ground cinnamon', 'quantity': 500, 'unit': 'grams', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
+    {'category': 'Pantry', 'ingredient': 'porridge oats', 'quantity': 500, 'unit': 'grams', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=8)},
+    {'category': 'Pantry', 'ingredient': 'sausages', 'quantity': 20, 'unit': 'units', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=8)},
+    {'category': 'Pantry', 'ingredient': 'honey', 'quantity': 750, 'unit': 'milliliters', 'location': 'PANTRY', 'expiry_date': today + timedelta(days=365)},
 
+
+]
     for entry in sample_foods:
         category = Category.objects.get(name=entry['category'])
 

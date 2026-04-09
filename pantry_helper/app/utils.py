@@ -1,7 +1,9 @@
 from django.contrib.auth.models import Group
 
-ROLE_GROUPS = ['HouseholdAdmin', 'InventoryManager', 'Member', 'Viewer']
 
+#aux functions
+
+ROLE_GROUPS = ['HouseholdAdmin', 'InventoryManager', 'Member', 'Viewer']
 
 def get_user_role(user):
     if not user.is_authenticated:

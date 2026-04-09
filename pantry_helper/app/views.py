@@ -14,7 +14,8 @@ from .utils import assign_user_role, get_membership, get_user_role
 
 AVAILABLE_ROLES = ['HouseholdAdmin', 'InventoryManager', 'Member', 'Viewer']
 
-
+##################
+#aux functions
 def _get_available_foods_for_household(household):
     return Food.objects.select_related('ingredient').filter(
         household=household,
@@ -22,18 +23,16 @@ def _get_available_foods_for_household(household):
     )
 
 
-def _build_recipe_suggestions(household, limit=None):
+def _build_recipe_suggestions(household, limit=None, dashboard_priority=False):
     today = timezone.localdate()
     expiring_limit = today + timedelta(days=7)
 
     available_foods = _get_available_foods_for_household(household)
-
     available_ingredient_ids = set()
     expiring_ingredient_ids = set()
 
     for food in available_foods:
         available_ingredient_ids.add(food.ingredient_id)
-
         if food.expiry_date and today <= food.expiry_date <= expiring_limit:
             expiring_ingredient_ids.add(food.ingredient_id)
 
@@ -50,7 +49,6 @@ def _build_recipe_suggestions(household, limit=None):
 
     for recipe in recipes:
         recipe_ingredients = list(recipe.recipe_ingredients.all())
-
         if not recipe_ingredients:
             continue
 
@@ -87,17 +85,28 @@ def _build_recipe_suggestions(household, limit=None):
             'expiring_match_count': expiring_match_count,
             'expiring_ingredients': expiring_ingredients[:5],
             'can_make_now': missing_count == 0,
-            'almost_make_now': missing_count <= 2,
+            'almost_make_now': 1 <= missing_count <= 2,
         })
 
-    suggestions.sort(
-        key=lambda item: (
-            -item['expiring_match_count'],
-            item['missing_count'],
-            -item['matched_count'],
-            item['recipe'].name.lower(),
+    if dashboard_priority:
+        suggestions.sort(
+            key=lambda item: (
+                0 if item['can_make_now'] else 1 if item['missing_count'] <= 2 else 2,
+                item['missing_count'],
+                -item['expiring_match_count'],
+                -item['matched_count'],
+                item['recipe'].name.lower(),
+            )
         )
-    )
+    else:
+        suggestions.sort(
+            key=lambda item: (
+                -item['expiring_match_count'],
+                item['missing_count'],
+                -item['matched_count'],
+                item['recipe'].name.lower(),
+            )
+        )
 
     if limit is not None:
         suggestions = suggestions[:limit]
@@ -153,6 +162,10 @@ def _ordered_foods_queryset(queryset):
         )
     ).order_by('expiry_sort_bucket', 'expiry_date', 'ingredient__name')
 
+
+###########
+#functions
+
 def home(request):
     return render(request, 'app/home.html')
 
@@ -204,6 +217,7 @@ def dashboard(request):
         recipe_suggestions = _build_recipe_suggestions(
             membership.household,
             limit=5,
+            dashboard_priority=True,
         )
 
         if request.user.has_perm('app.view_wastelog'):
@@ -401,6 +415,7 @@ def recipe_list(request):
     }
 
     return render(request, 'app/recipes/recipelist.html', tparams)
+
 
 @login_required
 @permission_required('app.view_recipe', raise_exception=True)
@@ -805,12 +820,6 @@ def household_manage(request):
 
 
 @login_required
-@permission_required('app.manage_household_members', raise_exception=True)
-def household_members(request):
-    return redirect('app:household_manage')
-
-
-@login_required
 @permission_required('app.change_member_role', raise_exception=True)
 def household_member_change_role(request, member_id):
     membership = get_membership(request.user)
@@ -888,15 +897,6 @@ def household_member_add(request):
     )
     return render(request, 'app/household/household_manage.html', context)
 
-
-@login_required
-def household_create(request):
-    return household_manage(request)
-
-
-@login_required
-def household_edit(request):
-    return household_manage(request)
 
 
 @login_required
