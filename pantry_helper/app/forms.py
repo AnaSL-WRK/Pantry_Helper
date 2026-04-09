@@ -7,11 +7,12 @@ from django.forms import BaseInlineFormSet, inlineformset_factory
 
 
 from .models import Food, Ingredient, Category, WasteLog, Household, HouseholdMember, Recipe, RecipeIngredient, RecipeStep, Unit
-from .utils import get_user_role, ROLE_GROUPS
+from .utils import ROLE_GROUPS
 
 # forms
 
 class IngredientForm(forms.ModelForm):
+
     class Meta:
         model = Ingredient
         fields = ['name', 'category']
@@ -31,13 +32,13 @@ class IngredientForm(forms.ModelForm):
 
 
 class FoodForm(forms.ModelForm):
+
     class Meta:
         model = Food
         fields = ['ingredient', 'quantity', 'unit', 'location', 'expiry_date', 'notes']
         widgets = {
             'expiry_date': forms.DateInput(attrs={'type': 'date'}),
             'unit': forms.Select(choices=Unit.choices),
-        
         }
 
     def __init__(self, *args, **kwargs):
@@ -45,6 +46,7 @@ class FoodForm(forms.ModelForm):
         self.fields['ingredient'].queryset = Ingredient.objects.select_related('category').order_by('name')
         self.fields['ingredient'].empty_label = 'Select an ingredient'
         self.fields['unit'].choices = Unit.choices
+
 
     def clean_quantity(self):
         quantity = self.cleaned_data.get('quantity')
@@ -54,6 +56,7 @@ class FoodForm(forms.ModelForm):
 
         return quantity
     
+
     def clean_expiry_date(self):
         expiry_date = self.cleaned_data.get('expiry_date')
 
@@ -70,6 +73,7 @@ class FoodQuantityForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.food = kwargs.pop('food', None)
         super().__init__(*args, **kwargs)
+
 
     def clean_quantity(self):
         quantity = self.cleaned_data.get('quantity')
@@ -93,6 +97,7 @@ class WasteForm(forms.Form):
             self.fields['quantity'].label = f'Quantity ({self.food.unit})'
             self.fields['quantity'].help_text = f'Available: {self.food.quantity} {self.food.unit}'
 
+
     def clean_quantity(self):
         quantity = self.cleaned_data.get('quantity')
 
@@ -104,6 +109,7 @@ class WasteForm(forms.Form):
 
 
 class MemberRoleForm(forms.Form):
+
     role = forms.ChoiceField(
         choices=[(role, role) for role in ROLE_GROUPS],
         label='Role'
@@ -111,6 +117,7 @@ class MemberRoleForm(forms.Form):
 
 
 class HouseholdMemberCreateForm(UserCreationForm):
+    
     email = forms.EmailField(required=False)
     first_name = forms.CharField(max_length=150, required=False)
     last_name = forms.CharField(max_length=150, required=False)

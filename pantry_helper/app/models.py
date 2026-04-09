@@ -151,7 +151,7 @@ class Food(models.Model):
         return f'{self.ingredient.name} ({self.quantity} {self.unit})'
 
 
-
+#recipes 
 class Recipe(models.Model):
     household = models.ForeignKey(
         Household,
@@ -193,7 +193,7 @@ class Recipe(models.Model):
         return self.name
 
 
-
+#to link ingredients to recipes with quantities and units
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
@@ -231,13 +231,14 @@ class RecipeIngredient(models.Model):
         return f'{self.recipe.name} - {self.ingredient.name}'
 
 
-
+#text with recipe instructions
 class RecipeStep(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         related_name='steps'
     )
+
     step_text = models.TextField()
     position = models.PositiveSmallIntegerField(default=1)
 
@@ -247,6 +248,7 @@ class RecipeStep(models.Model):
 
     def __str__(self):
         return f'{self.recipe.name} - step {self.position}'
+    
     
 #to log wasted food and reasons for waste 
 class WasteLog(models.Model):
