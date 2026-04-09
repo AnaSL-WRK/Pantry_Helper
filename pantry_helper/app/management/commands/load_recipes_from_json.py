@@ -14,7 +14,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "json_path",
             nargs="?",
-            default="app/static/wasteless_recipes_500.json",
+            default="/static/wasteless_recipes_500.json",
             help="Path to the recipes JSON file.",
         )
         parser.add_argument(
