@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.db.models import Sum, Q, Case, When, Value, IntegerField
+from django.db.models import Sum, Q, Case, When, Value, IntegerField, Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -41,13 +41,18 @@ def _build_recipe_suggestions(household, limit=None, dashboard_priority=False):
             is_preloaded=True,
             household__isnull=True,
         )
-        .prefetch_related('recipe_ingredients__ingredient')
+        .prefetch_related(
+            Prefetch(
+                'recipe_ingredients',
+                queryset=RecipeIngredient.objects.select_related('ingredient').order_by('position'),
+            )
+        )
         .order_by('name')
     )
 
     suggestions = []
 
-    for recipe in recipes:
+    for recipe in recipes.iterator(chunk_size=100):
         recipe_ingredients = list(recipe.recipe_ingredients.all())
         if not recipe_ingredients:
             continue
@@ -64,7 +69,6 @@ def _build_recipe_suggestions(household, limit=None, dashboard_priority=False):
 
             if ingredient_id in available_ingredient_ids:
                 matched_count += 1
-
                 if ingredient_id in expiring_ingredient_ids:
                     expiring_match_count += 1
                     expiring_ingredients.append(ingredient_name)
@@ -112,7 +116,6 @@ def _build_recipe_suggestions(household, limit=None, dashboard_priority=False):
         suggestions = suggestions[:limit]
 
     return suggestions
-
 
 def _get_household_admin_count(household):
     return (
