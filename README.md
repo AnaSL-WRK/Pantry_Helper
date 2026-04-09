@@ -1,6 +1,8 @@
-# Pantry Helper
+# Pantry Helper 
 
 Pantry Helper is a Django web application for managing household pantry items, tracking expiry dates and food waste, and suggesting recipes based on the ingredients currently available.
+
+### Available on https://anawk25.eu.pythonanywhere.com
 
 ## Features
 
