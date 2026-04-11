@@ -91,9 +91,25 @@ This project also creates a demo user for each role, demo household, and sample 
 python manage.py load_demo_data
 ```
 
-### Demo account
+### Demo accounts
 
+#### HouseholdAdmin
 ```text
 Username: demo_client
+Password: demo1234
+```
+#### InventoryManager
+```text
+Username: demo_inventory
+Password: demo1234
+```
+#### Member
+```text
+Username: demo_member
+Password: demo1234
+```
+#### Viewer
+```text
+Username: demo_viewer
 Password: demo1234
 ```
