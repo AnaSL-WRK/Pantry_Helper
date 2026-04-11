@@ -26,8 +26,14 @@
         <div>
             <span class="eyebrow">Administration</span>
             <h1>Household</h1>
-            <p class="page-subtitle">Edit household details and manage household members.</p>
-        </div>
+                <p class="page-subtitle">
+                    {% if can_edit_household or can_manage_members %}
+                        Edit household details and manage household members.
+                    {% else %}
+                        View your household details and members.
+                    {% endif %}
+                </p>        
+            </div>
 
         <div class="tag-row">
             {% if membership %}

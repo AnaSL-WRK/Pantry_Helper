@@ -6,7 +6,7 @@ Pantry Helper is a Django web application for managing household pantry items, t
 
 ## Features
 
-- User authentication with login/logout
+- User register and authentication with login/logout
 - Household-based pantry management
 - Different user roles with different permissions:
   - Viewer
@@ -87,15 +87,31 @@ http://127.0.0.1:8000/
 
 ## Demo Data
 
-This project also creates a demo user, demo household, and sample pantry items for demonstration purposes with the following command
+This project also creates a demo user for each role, demo household, and sample pantry items for demonstration purposes with the following command
 
 ```bash
 python manage.py load_demo_data
 ```
 
-### Demo account
+### Demo accounts
 
+#### HouseholdAdmin
 ```text
 Username: demo_client
+Password: demo1234
+```
+#### InventoryManager
+```text
+Username: demo_inventory
+Password: demo1234
+```
+#### Member
+```text
+Username: demo_member
+Password: demo1234
+```
+#### Viewer
+```text
+Username: demo_viewer
 Password: demo1234
 ```
