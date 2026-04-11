@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib.auth import login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Sum, Q, Case, When, Value, IntegerField
@@ -7,7 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from .forms import FoodForm, FoodQuantityForm, HouseholdForm, HouseholdMemberCreateForm, IngredientForm, MemberRoleForm, WasteForm, RecipeForm, RecipeIngredientFormSet, RecipeStepFormSet
+from .forms import RegisterForm, FoodForm, FoodQuantityForm, HouseholdForm, HouseholdMemberCreateForm, IngredientForm, MemberRoleForm, WasteForm, RecipeForm, RecipeIngredientFormSet, RecipeStepFormSet
 from .models import Food, Household, HouseholdMember, Ingredient, Recipe, WasteLog, RecipeIngredient, RecipeStep
 from .utils import assign_user_role, get_membership, get_user_role
 
@@ -168,6 +169,24 @@ def _ordered_foods_queryset(queryset):
 
 def home(request):
     return render(request, 'app/home.html')
+
+def register(request):
+    if request.user.is_authenticated:
+        return redirect('app:dashboard')
+
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Account created successfully.')
+            return redirect('app:household_manage')
+    else:
+        form = RegisterForm()
+
+    return render(request, 'registration/register.html', {
+        'form': form,
+    })
 
 
 @login_required
@@ -792,12 +811,7 @@ def household_manage(request):
             'is_creating_household': True,
         })
 
-    if not (
-        request.user.has_perm('app.change_household')
-        or request.user.has_perm('app.manage_household_members')
-    ):
-        return redirect('app:dashboard')
-
+    #only users with permission can edit
     if request.method == 'POST':
         if not request.user.has_perm('app.change_household'):
             messages.error(request, 'You do not have permission to edit this household.')
@@ -817,7 +831,6 @@ def household_manage(request):
         household_form=household_form,
     )
     return render(request, 'app/household/household_manage.html', context)
-
 
 @login_required
 @permission_required('app.change_member_role', raise_exception=True)

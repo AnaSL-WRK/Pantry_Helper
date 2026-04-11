@@ -11,6 +11,24 @@ from .utils import ROLE_GROUPS
 
 # forms
 
+class RegisterForm(UserCreationForm):
+    email = forms.EmailField(required=False)
+    first_name = forms.CharField(max_length=150, required=False)
+    last_name = forms.CharField(max_length=150, required=False)
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2']
+
+    def clean_username(self):
+        username = self.cleaned_data['username'].strip()
+
+        if User.objects.filter(username__iexact=username).exists():
+            raise ValidationError('A user with this username already exists.')
+
+        return username
+    
+
 class IngredientForm(forms.ModelForm):
 
     class Meta:

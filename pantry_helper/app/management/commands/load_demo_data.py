@@ -5,14 +5,47 @@ from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from app.models import Category, Food, Household, HouseholdMember, Ingredient, Unit
+from app.models import Category, Food, Household, HouseholdMember, Ingredient
 
 
 ROLE_GROUP_NAMES = ['Viewer', 'Member', 'InventoryManager', 'HouseholdAdmin']
 
+DEMO_USERS = [
+    {
+        'username': 'demo_client',
+        'email': 'demo_client@example.com',
+        'first_name': 'Demo',
+        'last_name': 'Client',
+        'role': 'HouseholdAdmin',
+    },
+    {
+        'username': 'demo_viewer',
+        'email': 'demo_viewer@example.com',
+        'first_name': 'Demo',
+        'last_name': 'Viewer',
+        'role': 'Viewer',
+    },
+    {
+        'username': 'demo_member',
+        'email': 'demo_member@example.com',
+        'first_name': 'Demo',
+        'last_name': 'Member',
+        'role': 'Member',
+    },
+    {
+        'username': 'demo_inventory',
+        'email': 'demo_inventory@example.com',
+        'first_name': 'Demo',
+        'last_name': 'Inventory',
+        'role': 'InventoryManager',
+    },
+]
+
+DEMO_PASSWORD = 'demo1234'
+
 
 class Command(BaseCommand):
-    help = "Create or refresh demo user, household, and pantry sample data."
+    help = "Create or refresh demo users, household, and pantry sample data."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -30,21 +63,8 @@ class Command(BaseCommand):
 
         today = date.today()
 
-        demo_user, created_user = User.objects.get_or_create(
-            username='demo_client',
-            defaults={
-                'email': 'demo_client@example.com',
-                'first_name': 'Demo',
-                'last_name': 'Client',
-                'is_active': True,
-                'is_staff': False,
-                'is_superuser': False,
-            },
-        )
-
-        # keep password predictable for presentation/demo use
-        demo_user.set_password('demo1234')
-        demo_user.save()
+        admin_config = next(user for user in DEMO_USERS if user['role'] == 'HouseholdAdmin')
+        demo_user, created_user = self._upsert_demo_user(User, admin_config)
 
         household, created_household = Household.objects.get_or_create(
             name='Demo Household',
@@ -54,7 +74,6 @@ class Command(BaseCommand):
             },
         )
 
-        # if the household already existed but had no creator
         if household.created_by_id is None:
             household.created_by = demo_user
             household.save(update_fields=['created_by'])
@@ -64,7 +83,28 @@ class Command(BaseCommand):
             defaults={'household': household},
         )
 
-        self._assign_household_admin_role(demo_user)
+        self._assign_role(demo_user, 'HouseholdAdmin')
+
+        created_extra_users = 0
+        updated_extra_users = 0
+
+        for user_config in DEMO_USERS:
+            if user_config['role'] == 'HouseholdAdmin':
+                continue
+
+            role_user, role_user_created = self._upsert_demo_user(User, user_config)
+
+            HouseholdMember.objects.update_or_create(
+                user=role_user,
+                defaults={'household': household},
+            )
+
+            self._assign_role(role_user, user_config['role'])
+
+            if role_user_created:
+                created_extra_users += 1
+            else:
+                updated_extra_users += 1
 
         sample_foods = [
             {'category': 'Dairy', 'ingredient': 'milk', 'quantity': 1, 'unit': 'liters', 'location': 'FRIDGE', 'expiry_date': today - timedelta(days=2)},
@@ -147,38 +187,69 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f"Demo data ready. "
-                f"user_created={created_user}, "
+                f"admin_created={created_user}, "
+                f"extra_users_created={created_extra_users}, "
+                f"extra_users_updated={updated_extra_users}, "
                 f"household_created={created_household}, "
                 f"foods_created={created_foods}, "
                 f"foods_updated={updated_foods}"
             )
         )
 
-    def _assign_household_admin_role(self, user):
-        user.groups.remove(*Group.objects.filter(name__in=ROLE_GROUP_NAMES))
-        admin_group = Group.objects.filter(name='HouseholdAdmin').first()
+        self.stdout.write("Demo credentials:")
+        for user_config in DEMO_USERS:
+            self.stdout.write(
+                f"  - {user_config['username']} / {DEMO_PASSWORD} ({user_config['role']})"
+            )
 
-        if admin_group is None:
+    def _assign_role(self, user, role_name):
+        user.groups.remove(*Group.objects.filter(name__in=ROLE_GROUP_NAMES))
+        role_group = Group.objects.filter(name=role_name).first()
+
+        if role_group is None:
             self.stdout.write(
                 self.style.WARNING(
-                    "HouseholdAdmin group was not found. "
+                    f"{role_name} group was not found. "
                     "Run 'python manage.py migrate' first so role groups are created."
                 )
             )
             return
 
-        user.groups.add(admin_group)
+        user.groups.add(role_group)
+
+    def _upsert_demo_user(self, User, user_config):
+        user, created = User.objects.get_or_create(
+            username=user_config['username'],
+            defaults={
+                'email': user_config['email'],
+                'first_name': user_config['first_name'],
+                'last_name': user_config['last_name'],
+                'is_active': True,
+                'is_staff': False,
+                'is_superuser': False,
+            },
+        )
+
+        user.email = user_config['email']
+        user.first_name = user_config['first_name']
+        user.last_name = user_config['last_name']
+        user.is_active = True
+        user.is_staff = False
+        user.is_superuser = False
+        user.set_password(DEMO_PASSWORD)
+        user.save()
+
+        return user, created
 
     def _reset_demo_data(self, User):
-        demo_user = User.objects.filter(username='demo_client').first()
         demo_household = Household.objects.filter(name='Demo Household').first()
+        demo_usernames = [user['username'] for user in DEMO_USERS]
 
         if demo_household:
             Food.objects.filter(household=demo_household).delete()
             HouseholdMember.objects.filter(household=demo_household).delete()
             demo_household.delete()
 
-        if demo_user:
-            demo_user.delete()
+        User.objects.filter(username__in=demo_usernames).delete()
 
         self.stdout.write(self.style.WARNING("Previous demo data removed."))
